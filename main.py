@@ -71,6 +71,7 @@ class ArbitrageBot:
             self._handle_single(message)
 
     def _handle_single(self, message: dict):
+        print(f"[debug] pesan mentah diterima: {message}")  # TODO: hapus setelah verifikasi field selesai
         event_type = message.get("event_type") or message.get("type")
         book = self.books.get(message.get("asset_id"))
         if book is None:
