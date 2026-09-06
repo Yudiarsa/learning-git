@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Koperasi Keluarga</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-title">
+      <span class="topbar-name">Koperasi Keluarga</span>
+      <span class="topbar-sub" id="topbarSub">Dashboard</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="notifBtn" aria-label="Notifikasi">
+        🔔<span class="badge" id="notifBadge" hidden>0</span>
+      </button>
+      <button class="icon-btn" id="themeBtn" aria-label="Ganti tema">🌙</button>
+    </div>
+  </header>
+
+  <!-- Notification drawer -->
+  <div class="drawer" id="notifDrawer" hidden>
+    <div class="drawer-header">
+      <h3>Notifikasi Jatuh Tempo</h3>
+      <button class="icon-btn" id="notifCloseBtn">✕</button>
+    </div>
+    <div id="notifList" class="notif-list"></div>
+  </div>
+
+  <!-- Main content -->
+  <main class="content" id="content">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="tab-panel" id="tab-dashboard">
+
+      <div class="hero-card">
+        <div class="hero-label">Kas Koperasi</div>
+        <div class="hero-value" id="heroKas">Rp0</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card teal">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Saldo Simpanan</div>
+          <div class="stat-value" id="statSimpanan">Rp0</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">📄</div>
+          <div class="stat-label">Pinjaman Aktif</div>
+          <div class="stat-value" id="statPinjaman">Rp0</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon">🎁</div>
+          <div class="stat-label">SHU Tahun Ini</div>
+          <div class="stat-value" id="statShu">Rp0</div>
+        </div>
+        <div class="stat-card violet">
+          <div class="stat-icon">👥</div>
+          <div class="stat-label">Anggota</div>
+          <div class="stat-value" id="statAnggota">0 Org</div>
+        </div>
+      </div>
+
+      <div id="dueSoonBanner" class="due-banner" hidden></div>
+
+      <div class="section-block">
+        <div class="section-heading">Quick Action</div>
+        <div class="quick-actions">
+          <button class="qa-btn" data-action="setoran"><span class="qa-emoji">➕</span>Setoran</button>
+          <button class="qa-btn" data-action="penarikan"><span class="qa-emoji">➖</span>Penarikan</button>
+          <button class="qa-btn" data-action="pinjaman"><span class="qa-emoji">💰</span>Pinjaman</button>
+          <button class="qa-btn" data-action="angsuran"><span class="qa-emoji">📄</span>Angsuran</button>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">Aktivitas Terbaru</div>
+        <div id="activityList" class="activity-list"></div>
+      </div>
+
+    </section>
+
+    <!-- ============ ANGGOTA ============ -->
+    <section class="tab-panel" id="tab-anggota" hidden>
+      <div class="search-row">
+        <input type="search" id="memberSearch" placeholder="Cari anggota...">
+      </div>
+      <div id="memberList" class="member-list"></div>
+    </section>
+
+    <!-- ============ KEUANGAN ============ -->
+    <section class="tab-panel" id="tab-keuangan" hidden>
+
+      <div class="section-block">
+        <div class="section-heading">Ringkasan</div>
+        <div class="stat-grid three">
+          <div class="stat-card green">
+            <div class="stat-label">Kas Masuk</div>
+            <div class="stat-value" id="kmKasMasuk">Rp0</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Kas Keluar</div>
+            <div class="stat-value" id="kmKasKeluar">Rp0</div>
+          </div>
+          <div class="stat-card teal">
+            <div class="stat-label">Saldo Akhir</div>
+            <div class="stat-value" id="kmSaldoAkhir">Rp0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">Simpanan per Bulan</div>
+        <div class="chart-card" id="chartSimpanan"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">Pinjaman Beredar</div>
+        <div class="chart-card" id="chartPinjaman"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">Kas Koperasi (Tren)</div>
+        <div class="chart-card" id="chartKas"></div>
+      </div>
+
+    </section>
+
+    <!-- ============ LAPORAN ============ -->
+    <section class="tab-panel" id="tab-laporan" hidden>
+
+      <div class="section-block">
+        <div class="section-heading">Periode</div>
+        <div class="filter-row" id="periodFilter">
+          <button class="filter-chip active" data-period="hari">Hari Ini</button>
+          <button class="filter-chip" data-period="bulan">Bulan Ini</button>
+          <button class="filter-chip" data-period="tahun">Tahun Ini</button>
+          <button class="filter-chip" data-period="custom">Custom</button>
+        </div>
+        <div class="custom-range" id="customRange" hidden>
+          <input type="date" id="dateFrom">
+          <span>s/d</span>
+          <input type="date" id="dateTo">
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">Jenis Laporan</div>
+        <div class="filter-row" id="reportTypeFilter">
+          <button class="filter-chip active" data-type="simpanan">Simpanan</button>
+          <button class="filter-chip" data-type="pinjaman">Pinjaman</button>
+          <button class="filter-chip" data-type="angsuran">Angsuran</button>
+          <button class="filter-chip" data-type="shu">SHU Anggota</button>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading-row">
+          <div class="section-heading">Hasil</div>
+          <div class="export-buttons">
+            <button class="btn-outline" id="exportExcelBtn">📥 Excel</button>
+            <button class="btn-outline" id="exportPdfBtn">📥 PDF</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="reportTable">
+            <thead id="reportThead"></thead>
+            <tbody id="reportTbody"></tbody>
+          </table>
+        </div>
+        <div id="reportEmpty" class="empty-state" hidden>Tidak ada data pada periode ini.</div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Bottom navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="dashboard">
+      <span class="nav-icon">🏠</span><span>Dashboard</span>
+    </button>
+    <button class="nav-item" data-tab="anggota">
+      <span class="nav-icon">👥</span><span>Anggota</span>
+    </button>
+    <button class="nav-item" data-tab="keuangan">
+      <span class="nav-icon">📊</span><span>Keuangan</span>
+    </button>
+    <button class="nav-item" data-tab="laporan">
+      <span class="nav-icon">🧾</span><span>Laporan</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- Modal: Quick Action forms -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Setoran</h3>
+      <button class="icon-btn" id="modalCloseBtn">✕</button>
+    </div>
+    <form id="modalForm">
+      <label>Anggota</label>
+      <select id="modalAnggota" required></select>
+
+      <label id="modalAmountLabel">Jumlah (Rp)</label>
+      <input type="number" id="modalAmount" min="1000" step="1000" required>
+
+      <label>Keterangan (opsional)</label>
+      <input type="text" id="modalNote" placeholder="Contoh: setoran bulanan">
+
+      <button type="submit" class="btn-primary" id="modalSubmitBtn">Simpan</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Member detail -->
+<div class="modal-overlay" id="memberModalOverlay" hidden>
+  <div class="modal modal-large">
+    <div class="modal-header">
+      <h3 id="memberModalTitle">Anggota</h3>
+      <button class="icon-btn" id="memberModalCloseBtn">✕</button>
+    </div>
+    <div id="memberModalBody" class="member-detail"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>
