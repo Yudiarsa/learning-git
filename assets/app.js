@@ -1,109 +1,90 @@
 /* =========================================================
-   Koperasi Keluarga — data + logic
-   Data disimpan di localStorage (client-side only, demo app).
+   SEKE MESARI — Arisan & Pinjaman Keluarga
+   Client-side demo (localStorage). Login/OTP = simulasi UI,
+   BUKAN sistem otentikasi nyata. Lihat README bagian Keamanan.
    ========================================================= */
 
-const STORAGE_KEY = "koperasi_keluarga_state_v1";
-const THEME_KEY = "koperasi_keluarga_theme";
+const STORAGE_KEY = "seke_mesari_state_v1";
+const THEME_KEY = "seke_mesari_theme";
+const SESSION_KEY = "seke_mesari_session";
 
-const NAMES = [
-  "Gede", "Wayan", "Made", "Ketut", "Nyoman", "Putu", "Kadek", "Komang",
-  "Wayan Sari", "Made Ayu", "Ketut Arta", "Nyoman Dewi", "Putu Agus",
-  "Kadek Yuni", "Komang Rai", "Gede Suarta", "Wayan Merta", "Made Suarni",
-  "Ketut Suastika", "Nyoman Widi", "Putu Sukerta", "Kadek Sri", "Komang Yasa",
-  "Gede Wirawan"
-];
+const BUNGA_PERSEN = 1;
+const TOTAL_CICILAN = 10;
+const TOTAL_PERIODE = 10;
 
+function todayIso() { return new Date().toISOString().slice(0, 10); }
 function daysFromNow(n) {
   const d = new Date();
   d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
 }
+function nowIso() { return new Date().toISOString(); }
 
-function monthsAgoLabel(n) {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  return d.toLocaleDateString("id-ID", { month: "short" });
-}
-
+/* ===== Seed data ===== */
 function buildSeedState() {
   const anggotaSeed = [
-    { simpanan: 5000000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 8500000, pinjamanTotal: 2000000, angsuran: 250000, jatuhTempoIn: 3 },
-    { simpanan: 4000000, pinjamanTotal: 5000000, angsuran: 500000, jatuhTempoIn: 10 },
-    { simpanan: 1200000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 900000, pinjamanTotal: 500000, angsuran: 100000, jatuhTempoIn: 6 },
-    { simpanan: 1500000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 700000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 600000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 800000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 950000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 1100000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 500000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 650000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 720000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 480000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 300000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 400000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 250000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 350000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 200000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 300000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 400000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 300000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null },
-    { simpanan: 400000, pinjamanTotal: 0, angsuran: 0, jatuhTempoIn: null }
+    { nama: "Gede", hp: "081111000001", password: "admin123", role: "admin", tanggalBergabung: "2025-01-10", totalSimpanan: 1250000, pinjaman: null, tunggakan: 0 },
+    { nama: "Made", hp: "081111000002", password: "made123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 900000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 6, jatuhTempo: daysFromNow(4) }, tunggakan: 0 },
+    { nama: "Wayan", hp: "081111000003", password: "wayan123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 700000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 3, jatuhTempo: daysFromNow(-6) }, tunggakan: 2 },
+    { nama: "Komang", hp: "081111000004", password: "komang123", role: "anggota", tanggalBergabung: "2025-02-05", totalSimpanan: 1100000, pinjaman: null, tunggakan: 0 },
+    { nama: "Ketut", hp: "081111000005", password: "ketut123", role: "anggota", tanggalBergabung: "2025-02-05", totalSimpanan: 500000, pinjaman: { jumlah: 500000, cicilanTerbayar: 1, jatuhTempo: daysFromNow(-20) }, tunggakan: 3 },
+    { nama: "Nyoman", hp: "081111000006", password: "nyoman123", role: "anggota", tanggalBergabung: "2025-02-20", totalSimpanan: 800000, pinjaman: null, tunggakan: 0 },
+    { nama: "Putu", hp: "081111000007", password: "putu123", role: "anggota", tanggalBergabung: "2025-03-01", totalSimpanan: 650000, pinjaman: { jumlah: 2000000, cicilanTerbayar: 8, jatuhTempo: daysFromNow(2) }, tunggakan: 0 },
+    { nama: "Kadek", hp: "081111000008", password: "kadek123", role: "anggota", tanggalBergabung: "2025-03-15", totalSimpanan: 400000, pinjaman: null, tunggakan: 0 },
+    { nama: "Wayan Sari", hp: "081111000009", password: "sari123", role: "anggota", tanggalBergabung: "2025-04-01", totalSimpanan: 950000, pinjaman: null, tunggakan: 0 },
+    { nama: "Made Ayu", hp: "081111000010", password: "ayu123", role: "anggota", tanggalBergabung: "2025-04-01", totalSimpanan: 350000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 5, jatuhTempo: daysFromNow(9) }, tunggakan: 1 }
   ];
 
-  const anggota = anggotaSeed.map((seed, i) => {
-    const riwayatSimpanan = [0.7, 0.85, 1, 0.95, 1.1, 1.2].map((f, idx) => ({
-      bulan: monthsAgoLabel(5 - idx),
-      jumlah: Math.round((seed.simpanan / 6) * f)
-    }));
-    return {
-      id: "A" + String(i + 1).padStart(3, "0"),
-      kode: "KOP-" + String(i + 1).padStart(4, "0"),
-      nama: NAMES[i] || "Anggota " + (i + 1),
-      simpanan: seed.simpanan,
-      pinjaman: seed.pinjamanTotal > 0 ? {
-        total: seed.pinjamanTotal,
-        sisa: seed.pinjamanTotal,
-        angsuranBulanan: seed.angsuran,
-        jatuhTempo: daysFromNow(seed.jatuhTempoIn)
-      } : null,
-      riwayatSimpanan
-    };
-  });
-
-  const totalSimpanan = anggota.reduce((s, a) => s + a.simpanan, 0);
-  const shuTahunIni = 1250000;
-  anggota.forEach(a => {
-    a.shuDiterima = Math.round(shuTahunIni * (a.simpanan / totalSimpanan));
-  });
+  const anggota = anggotaSeed.map((s, i) => ({
+    id: "A" + String(i + 1).padStart(3, "0"),
+    nama: s.nama,
+    hp: s.hp,
+    password: s.password,
+    role: s.role,
+    tanggalBergabung: s.tanggalBergabung,
+    status: "aktif",
+    totalSimpanan: s.totalSimpanan,
+    tunggakan: s.tunggakan,
+    pinjaman: s.pinjaman ? {
+      jumlah: s.pinjaman.jumlah,
+      totalCicilan: TOTAL_CICILAN,
+      cicilanTerbayar: s.pinjaman.cicilanTerbayar,
+      bungaPersenBulan: BUNGA_PERSEN,
+      jatuhTempo: s.pinjaman.jatuhTempo
+    } : null
+  }));
 
   const findId = (idx) => anggota[idx].id;
 
   const transaksi = [
-    { id: "T001", tanggal: daysFromNow(-1), anggotaId: findId(0), jenis: "setoran", jumlah: 500000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T002", tanggal: daysFromNow(-1), anggotaId: findId(1), jenis: "angsuran", jumlah: 250000, arah: "masuk", keterangan: "Angsuran pinjaman" },
-    { id: "T003", tanggal: daysFromNow(-2), anggotaId: findId(2), jenis: "pinjaman", jumlah: 5000000, arah: "keluar", keterangan: "Pencairan pinjaman" },
-    { id: "T004", tanggal: daysFromNow(-3), anggotaId: findId(3), jenis: "setoran", jumlah: 300000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T005", tanggal: daysFromNow(-4), anggotaId: findId(4), jenis: "angsuran", jumlah: 100000, arah: "masuk", keterangan: "Angsuran pinjaman" },
-    { id: "T006", tanggal: daysFromNow(-5), anggotaId: findId(5), jenis: "penarikan", jumlah: 200000, arah: "keluar", keterangan: "Penarikan simpanan" },
-    { id: "T007", tanggal: daysFromNow(-6), anggotaId: findId(0), jenis: "setoran", jumlah: 400000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T008", tanggal: daysFromNow(-8), anggotaId: findId(2), jenis: "angsuran", jumlah: 500000, arah: "masuk", keterangan: "Angsuran pinjaman" }
+    { id: "T001", tanggal: daysFromNow(-1), anggotaId: findId(1), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
+    { id: "T002", tanggal: daysFromNow(-22), anggotaId: findId(1), jenis: "pinjaman", jumlah: 1000000, arah: "keluar", keterangan: "Pencairan pinjaman" },
+    { id: "T003", tanggal: daysFromNow(-27), anggotaId: findId(1), jenis: "angsuran", jumlah: 101000, arah: "masuk", keterangan: "Angsuran ke-6" },
+    { id: "T004", tanggal: daysFromNow(-5), anggotaId: findId(2), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
+    { id: "T005", tanggal: daysFromNow(-15), anggotaId: findId(6), jenis: "angsuran", jumlah: 220000, arah: "masuk", keterangan: "Angsuran ke-8" },
+    { id: "T006", tanggal: daysFromNow(-3), anggotaId: findId(3), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
+    { id: "T007", tanggal: daysFromNow(-40), anggotaId: findId(4), jenis: "pinjaman", jumlah: 500000, arah: "keluar", keterangan: "Pencairan pinjaman" }
+  ];
+
+  const pengumuman = [
+    { id: "P1", teks: "Pertemuan Bulanan 10 September di Balai Banjar", tanggal: daysFromNow(3) },
+    { id: "P2", teks: "Kas Periode ke-7 telah ditutup", tanggal: daysFromNow(-2) },
+    { id: "P3", teks: "Pengajuan pinjaman periode ke-8 dibuka", tanggal: daysFromNow(-1) }
   ];
 
   return {
-    kasKoperasi: 120000000,
-    ringkasanKeuangan: { kasMasukAwal: 250000000, kasKeluarAwal: 180000000 },
-    trenBulanan: {
-      simpanan: [0.6, 0.75, 0.85, 0.95, 1.1, 1.25].map(f => Math.round(totalSimpanan * f * 0.18)),
-      pinjaman: [3000000, 4200000, 5000000, 6100000, 7000000, 7500000],
-      kas: [95000000, 100000000, 105000000, 110000000, 115000000, 120000000]
-    },
-    shuTahunIni,
+    periodeSekarang: 7,
+    totalPeriode: TOTAL_PERIODE,
+    kasTerkumpulAwal: 8000000,
     anggota,
-    transaksi
+    transaksi,
+    pengumuman,
+    pengajuanPinjaman: [],
+    buktiPembayaran: [],
+    auditLog: [
+      { id: "L1", actor: "Gede", aksi: "Menyetujui pinjaman Made sebesar Rp1.000.000", waktu: new Date(Date.now() - 22 * 86400000).toISOString() },
+      { id: "L2", actor: "Gede", aksi: "Menyetujui pinjaman Wayan sebesar Rp1.000.000", waktu: new Date(Date.now() - 60 * 86400000).toISOString() }
+    ]
   };
 }
 
@@ -118,18 +99,19 @@ function loadState() {
   saveState(seed);
   return seed;
 }
-
-function saveState(state) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn("Gagal menyimpan data.", e);
-  }
+function saveState(s) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+  catch (e) { console.warn("Gagal menyimpan data.", e); }
 }
 
 let state = loadState();
+let session = null;
+try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { session = null; }
 
-/* ===== Formatting helpers ===== */
+let viewAsAdmin = false; // demo-only "lihat sebagai" toggle, follows session role by default
+let lainnyaView = "menu";
+
+/* ===== Helpers ===== */
 function formatRupiah(n) {
   n = Math.round(n || 0);
   return "Rp" + n.toLocaleString("id-ID");
@@ -137,129 +119,423 @@ function formatRupiah(n) {
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 }
+function formatDateTime(iso) {
+  return new Date(iso).toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 function initials(name) {
   return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
 }
-function getAnggota(id) {
-  return state.anggota.find(a => a.id === id);
+function getAnggota(id) { return state.anggota.find(a => a.id === id); }
+function currentUser() { return session ? getAnggota(session.anggotaId) : null; }
+function isAdmin() { const u = currentUser(); return !!u && u.role === "admin"; }
+
+function angsuranPerBulan(pinjaman) {
+  return Math.round((pinjaman.jumlah / pinjaman.totalCicilan) * (1 + pinjaman.bungaPersenBulan / 100));
+}
+function sisaHutang(pinjaman) {
+  const pokokPerCicilan = pinjaman.jumlah / pinjaman.totalCicilan;
+  return Math.max(0, Math.round(pinjaman.jumlah - pokokPerCicilan * pinjaman.cicilanTerbayar));
+}
+function statusPinjaman(a) {
+  if (!a.pinjaman) return { label: "Tidak Ada Pinjaman", cls: "none" };
+  if (a.tunggakan >= 3) return { label: "Perlu Evaluasi Keanggotaan", cls: "evaluasi" };
+  if (a.tunggakan >= 1) return { label: `Menunggak ${a.tunggakan}x`, cls: "telat" };
+  return { label: "Lancar", cls: "lancar" };
+}
+function skorKepatuhan(a) {
+  return Math.max(35, 100 - a.tunggakan * 15);
+}
+function starsForScore(score) {
+  const n = Math.max(1, Math.min(5, Math.round(score / 20)));
+  return "★".repeat(n) + "☆".repeat(5 - n);
 }
 
 /* ===== Derived totals ===== */
-function totalSimpanan() {
-  return state.anggota.reduce((s, a) => s + a.simpanan, 0);
+function totalAnggotaAktif() { return state.anggota.filter(a => a.status === "aktif").length; }
+function kasTerkumpul() {
+  const dariTransaksi = state.transaksi.reduce((s, t) => s + (t.arah === "masuk" ? t.jumlah : -t.jumlah), 0);
+  return state.kasTerkumpulAwal + dariTransaksi;
 }
-function totalPinjamanAktif() {
-  return state.anggota.reduce((s, a) => s + (a.pinjaman ? a.pinjaman.sisa : 0), 0);
+function pinjamanBeredar() {
+  return state.anggota.reduce((s, a) => s + (a.pinjaman ? sisaHutang(a.pinjaman) : 0), 0);
 }
-function kasMasukTotal() {
-  const dariTransaksi = state.transaksi.filter(t => t.arah === "masuk").reduce((s, t) => s + t.jumlah, 0);
-  return state.ringkasanKeuangan.kasMasukAwal + dariTransaksi;
+function anggotaMenunggak() { return state.anggota.filter(a => a.pinjaman && a.tunggakan >= 1).length; }
+function jatuhTempoBulanIni() {
+  const now = new Date();
+  return state.anggota.filter(a => {
+    if (!a.pinjaman) return false;
+    const d = new Date(a.pinjaman.jatuhTempo);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
 }
-function kasKeluarTotal() {
-  const dariTransaksi = state.transaksi.filter(t => t.arah === "keluar").reduce((s, t) => s + t.jumlah, 0);
-  return state.ringkasanKeuangan.kasKeluarAwal + dariTransaksi;
-}
-function anggotaJatuhTempoDekat(maxDays = 7) {
+function pengingatList() {
   const now = new Date();
   return state.anggota
-    .filter(a => a.pinjaman && a.pinjaman.sisa > 0)
+    .filter(a => a.pinjaman)
     .map(a => {
       const due = new Date(a.pinjaman.jatuhTempo);
-      const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil((due - now) / 86400000);
       return { anggota: a, diffDays };
     })
-    .filter(x => x.diffDays >= 0 && x.diffDays <= maxDays)
+    .filter(x => x.diffDays <= 7)
     .sort((a, b) => a.diffDays - b.diffDays);
 }
 
-/* ===== Rendering: Dashboard ===== */
-function renderDashboard() {
-  document.getElementById("heroKas").textContent = formatRupiah(state.kasKoperasi);
-  document.getElementById("statSimpanan").textContent = formatRupiah(totalSimpanan());
-  document.getElementById("statPinjaman").textContent = formatRupiah(totalPinjamanAktif());
-  document.getElementById("statShu").textContent = formatRupiah(state.shuTahunIni);
-  document.getElementById("statAnggota").textContent = state.anggota.length + " Org";
+/* ===== Login flow ===== */
+let pendingLoginHp = null;
+let demoOtp = null;
 
-  const due = anggotaJatuhTempoDekat(7);
-  const banner = document.getElementById("dueSoonBanner");
-  if (due.length > 0) {
-    const first = due[0];
-    banner.hidden = false;
-    banner.innerHTML = `🔔 <div><strong>${due.length} anggota</strong> punya angsuran jatuh tempo dalam 7 hari.<br>Terdekat: ${first.anggota.nama}, ${first.diffDays === 0 ? "hari ini" : first.diffDays + " hari lagi"}.</div>`;
-    banner.onclick = () => openNotifDrawer();
-  } else {
-    banner.hidden = true;
-  }
+function initLogin() {
+  document.getElementById("loginStep1").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const hp = document.getElementById("loginHp").value.trim();
+    const pw = document.getElementById("loginPassword").value;
+    const a = state.anggota.find(x => x.hp === hp);
+    if (!a || a.password !== pw) {
+      showToast("Nomor HP atau password salah.");
+      return;
+    }
+    if (a.status !== "aktif") {
+      showToast("Akun anggota ini nonaktif.");
+      return;
+    }
+    pendingLoginHp = hp;
+    demoOtp = String(Math.floor(100000 + Math.random() * 900000));
+    document.getElementById("otpHint").textContent = demoOtp;
+    document.getElementById("loginStep1").hidden = true;
+    document.getElementById("loginStep2").hidden = false;
+  });
 
-  renderNotifBadge();
-  renderActivity();
+  document.getElementById("backToStep1").addEventListener("click", () => {
+    document.getElementById("loginStep2").hidden = true;
+    document.getElementById("loginStep1").hidden = false;
+  });
+
+  document.getElementById("loginStep2").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const otp = document.getElementById("loginOtp").value.trim();
+    if (otp !== demoOtp) {
+      showToast("Kode OTP salah.");
+      return;
+    }
+    const a = state.anggota.find(x => x.hp === pendingLoginHp);
+    session = { anggotaId: a.id };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    viewAsAdmin = a.role === "admin";
+    enterApp();
+  });
 }
 
-function renderActivity() {
-  const list = document.getElementById("activityList");
-  const sorted = [...state.transaksi].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)).slice(0, 8);
+function logout() {
+  session = null;
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById("appShell").hidden = true;
+  document.getElementById("loginScreen").hidden = false;
+  document.getElementById("loginStep1").reset();
+  document.getElementById("loginStep2").reset();
+  document.getElementById("loginStep1").hidden = false;
+  document.getElementById("loginStep2").hidden = true;
+}
+
+function enterApp() {
+  document.getElementById("loginScreen").hidden = true;
+  document.getElementById("appShell").hidden = false;
+  document.querySelectorAll(".admin-only").forEach(el => el.hidden = !isAdmin());
+  renderHome();
+}
+
+/* ===== Tabs ===== */
+const TAB_LABELS = { home: "Beranda", pinjaman: "Pinjaman", pembayaran: "Pembayaran", anggota: "Anggota", lainnya: "Lainnya" };
+function switchTab(tab) {
+  document.querySelectorAll(".tab-panel").forEach(el => el.hidden = true);
+  document.getElementById("tab-" + tab).hidden = false;
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.tab === tab));
+  document.getElementById("topbarSub").textContent = TAB_LABELS[tab];
+  if (tab === "home") renderHome();
+  if (tab === "pinjaman") renderPinjaman();
+  if (tab === "pembayaran") renderPembayaran();
+  if (tab === "anggota") renderMemberList(document.getElementById("memberSearch").value);
+  if (tab === "lainnya") { lainnyaView = "menu"; renderLainnya(); }
+}
+
+/* ===== HOME ===== */
+function renderHome() {
+  const u = currentUser();
+  if (!u) return;
+  document.getElementById("heroAvatar").textContent = initials(u.nama);
+  document.getElementById("heroName").textContent = u.nama + (isAdmin() ? " (Admin)" : "");
+  document.getElementById("heroPeriode").textContent = `Periode ke-${state.periodeSekarang} dari ${state.totalPeriode}`;
+
+  document.getElementById("statTotalAnggota").textContent = totalAnggotaAktif();
+  document.getElementById("statKas").textContent = formatRupiah(kasTerkumpul());
+  document.getElementById("statPinjamanBeredar").textContent = formatRupiah(pinjamanBeredar());
+  document.getElementById("statMenunggak").textContent = anggotaMenunggak();
+  document.getElementById("statJatuhTempo").textContent = jatuhTempoBulanIni() + " anggota";
+
+  document.getElementById("addPengumumanBtn").hidden = !isAdmin();
+
+  const list = document.getElementById("pengumumanList");
+  if (state.pengumuman.length === 0) {
+    list.innerHTML = `<div class="activity-empty">Belum ada pengumuman.</div>`;
+  } else {
+    list.innerHTML = [...state.pengumuman].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)).map(p => `
+      <div class="activity-item">
+        <div class="activity-icon in">📢</div>
+        <div class="activity-main">
+          <div class="activity-title">${escapeHtml(p.teks)}</div>
+          <div class="activity-sub">${formatDate(p.tanggal)}</div>
+        </div>
+        ${isAdmin() ? `<div class="activity-actions"><button class="btn-mini reject" data-del-pengumuman="${p.id}">Hapus</button></div>` : ""}
+      </div>`).join("");
+    if (isAdmin()) {
+      list.querySelectorAll("[data-del-pengumuman]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.pengumuman = state.pengumuman.filter(p => p.id !== btn.dataset.delPengumuman);
+          saveState(state);
+          renderHome();
+        });
+      });
+    }
+  }
+  renderNotifBadge();
+}
+
+function escapeHtml(s) {
+  const div = document.createElement("div");
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ===== Reminders ===== */
+function renderNotifBadge() {
+  const due = pengingatList().filter(x => x.diffDays >= 0);
+  const badge = document.getElementById("notifBadge");
+  if (due.length > 0) { badge.hidden = false; badge.textContent = due.length; }
+  else badge.hidden = true;
+}
+function openNotifDrawer() {
+  const items = pengingatList();
+  const listEl = document.getElementById("notifList");
+  if (items.length === 0) {
+    listEl.innerHTML = `<div class="notif-empty">Tidak ada pengingat jatuh tempo dalam waktu dekat.</div>`;
+  } else {
+    listEl.innerHTML = items.map(x => {
+      const late = x.diffDays < 0;
+      const angsuran = angsuranPerBulan(x.anggota.pinjaman);
+      const teks = late
+        ? `Anda memiliki tunggakan ${Math.abs(x.diffDays)} hari, sebesar ${formatRupiah(angsuran)}`
+        : `Pembayaran jatuh tempo ${x.diffDays === 0 ? "hari ini" : "dalam " + x.diffDays + " hari"} — ${formatRupiah(angsuran)}`;
+      return `
+      <div class="notif-item" data-id="${x.anggota.id}">
+        <div class="notif-emoji">${late ? "⚠️" : "🔔"}</div>
+        <div>
+          <div class="notif-title">${x.anggota.nama}</div>
+          <div class="notif-sub">${teks}</div>
+          <div class="notif-sub">Sisa pinjaman: ${formatRupiah(sisaHutang(x.anggota.pinjaman))}</div>
+        </div>
+      </div>`;
+    }).join("");
+    listEl.querySelectorAll(".notif-item").forEach(el => {
+      el.addEventListener("click", () => { closeNotifDrawer(); openMemberDetail(el.dataset.id); });
+    });
+  }
+  document.getElementById("notifDrawer").hidden = false;
+}
+function closeNotifDrawer() { document.getElementById("notifDrawer").hidden = true; }
+
+/* ===== PINJAMAN ===== */
+function renderPinjaman() {
+  const u = currentUser();
+  const block = document.getElementById("pinjamanAktifBlock");
+  if (u.pinjaman) {
+    const p = u.pinjaman;
+    const pct = Math.round((p.cicilanTerbayar / p.totalCicilan) * 100);
+    block.innerHTML = `
+      <div class="section-heading">Pinjaman Aktif</div>
+      <div class="chart-card">
+        <div class="md-stat-grid" style="margin-bottom:12px">
+          <div class="md-stat"><div class="md-stat-label">Jumlah</div><div class="md-stat-value">${formatRupiah(p.jumlah)}</div></div>
+          <div class="md-stat"><div class="md-stat-label">Bunga</div><div class="md-stat-value">${p.bungaPersenBulan}% / bulan</div></div>
+          <div class="md-stat"><div class="md-stat-label">Sisa Cicilan</div><div class="md-stat-value">${p.totalCicilan - p.cicilanTerbayar} dari ${p.totalCicilan}</div></div>
+          <div class="md-stat"><div class="md-stat-label">Sisa Hutang</div><div class="md-stat-value">${formatRupiah(sisaHutang(p))}</div></div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="progress-label">${pct}% · ${p.cicilanTerbayar}/${p.totalCicilan} pembayaran</div>
+        <div class="progress-label" style="margin-top:8px">Jatuh tempo: ${formatDate(p.jatuhTempo)} · Angsuran/bulan: ${formatRupiah(angsuranPerBulan(p))}</div>
+      </div>`;
+  } else {
+    block.innerHTML = `
+      <div class="section-heading">Pinjaman Aktif</div>
+      <div class="empty-state" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius)">Anda tidak memiliki pinjaman aktif.</div>`;
+  }
+
+  const approvalBlock = document.getElementById("approvalPinjamanBlock");
+  approvalBlock.hidden = !isAdmin();
+  if (isAdmin()) {
+    const pending = state.pengajuanPinjaman.filter(p => p.status === "menunggu");
+    const listEl = document.getElementById("approvalPinjamanList");
+    if (pending.length === 0) {
+      listEl.innerHTML = `<div class="activity-empty">Tidak ada pengajuan menunggu.</div>`;
+    } else {
+      listEl.innerHTML = pending.map(p => {
+        const a = getAnggota(p.anggotaId);
+        return `
+        <div class="activity-item">
+          <div class="activity-icon out">💰</div>
+          <div class="activity-main">
+            <div class="activity-title">${a.nama} — ${formatRupiah(p.jumlah)}</div>
+            <div class="activity-sub">${escapeHtml(p.tujuan)} · ${formatDate(p.createdAt)}</div>
+          </div>
+          <div class="activity-actions">
+            <button class="btn-mini approve" data-approve-pinjaman="${p.id}">Setujui</button>
+            <button class="btn-mini reject" data-reject-pinjaman="${p.id}">Tolak</button>
+          </div>
+        </div>`;
+      }).join("");
+      listEl.querySelectorAll("[data-approve-pinjaman]").forEach(btn => btn.addEventListener("click", () => decidePengajuanPinjaman(btn.dataset.approvePinjaman, true)));
+      listEl.querySelectorAll("[data-reject-pinjaman]").forEach(btn => btn.addEventListener("click", () => decidePengajuanPinjaman(btn.dataset.rejectPinjaman, false)));
+    }
+  }
+}
+
+function decidePengajuanPinjaman(id, approve) {
+  const p = state.pengajuanPinjaman.find(x => x.id === id);
+  if (!p) return;
+  const a = getAnggota(p.anggotaId);
+  p.status = approve ? "disetujui" : "ditolak";
+  if (approve) {
+    a.pinjaman = {
+      jumlah: p.jumlah,
+      totalCicilan: TOTAL_CICILAN,
+      cicilanTerbayar: 0,
+      bungaPersenBulan: BUNGA_PERSEN,
+      jatuhTempo: daysFromNow(30)
+    };
+    a.tunggakan = 0;
+    state.transaksi.push({
+      id: "T" + String(state.transaksi.length + 1).padStart(3, "0"),
+      tanggal: todayIso(), anggotaId: a.id, jenis: "pinjaman", jumlah: p.jumlah, arah: "keluar", keterangan: "Pencairan pinjaman"
+    });
+  }
+  logAudit(`${approve ? "Menyetujui" : "Menolak"} pengajuan pinjaman ${a.nama} sebesar ${formatRupiah(p.jumlah)}`);
+  saveState(state);
+  renderPinjaman();
+  showToast(approve ? "Pinjaman disetujui." : "Pengajuan ditolak.");
+}
+
+function logAudit(aksi) {
+  const u = currentUser();
+  state.auditLog.unshift({ id: "L" + (state.auditLog.length + 1), actor: u ? u.nama : "-", aksi, waktu: nowIso() });
+}
+
+/* ===== PEMBAYARAN ===== */
+let histFilterJenis = "semua";
+
+function renderPembayaran() {
+  const u = currentUser();
+
+  const verifBlock = document.getElementById("verifikasiBlock");
+  verifBlock.hidden = !isAdmin();
+  if (isAdmin()) {
+    const pending = state.buktiPembayaran.filter(b => b.status === "menunggu");
+    const listEl = document.getElementById("verifikasiList");
+    if (pending.length === 0) {
+      listEl.innerHTML = `<div class="activity-empty">Tidak ada bukti menunggu verifikasi.</div>`;
+    } else {
+      listEl.innerHTML = pending.map(b => {
+        const a = getAnggota(b.anggotaId);
+        return `
+        <div class="activity-item">
+          <div class="activity-icon in">📤</div>
+          <div class="activity-main">
+            <div class="activity-title">${a.nama} — ${formatRupiah(b.nominal)}</div>
+            <div class="activity-sub">${formatDate(b.tanggal)}${b.catatan ? " · " + escapeHtml(b.catatan) : ""}</div>
+          </div>
+          <div class="activity-actions">
+            <button class="btn-mini approve" data-approve-bukti="${b.id}">Setujui</button>
+            <button class="btn-mini reject" data-reject-bukti="${b.id}">Tolak</button>
+          </div>
+        </div>`;
+      }).join("");
+      listEl.querySelectorAll("[data-approve-bukti]").forEach(btn => btn.addEventListener("click", () => decideBukti(btn.dataset.approveBukti, true)));
+      listEl.querySelectorAll("[data-reject-bukti]").forEach(btn => btn.addEventListener("click", () => decideBukti(btn.dataset.rejectBukti, false)));
+    }
+  }
+
+  const buktiSaya = state.buktiPembayaran.filter(b => b.anggotaId === u.id).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const buktiEl = document.getElementById("buktiSayaList");
+  if (buktiSaya.length === 0) {
+    buktiEl.innerHTML = `<div class="activity-empty">Anda belum mengupload bukti pembayaran.</div>`;
+  } else {
+    buktiEl.innerHTML = buktiSaya.map(b => `
+      <div class="activity-item">
+        <div class="activity-icon ${b.status === "ditolak" ? "out" : "in"}">📎</div>
+        <div class="activity-main">
+          <div class="activity-title">${formatRupiah(b.nominal)}</div>
+          <div class="activity-sub">${formatDate(b.tanggal)}${b.catatan ? " · " + escapeHtml(b.catatan) : ""}</div>
+        </div>
+        <div class="status-pill ${b.status}">${b.status === "menunggu" ? "Menunggu Verifikasi" : b.status === "disetujui" ? "Disetujui" : "Ditolak"}</div>
+      </div>`).join("");
+  }
+
+  renderHistori();
+}
+
+function decideBukti(id, approve) {
+  const b = state.buktiPembayaran.find(x => x.id === id);
+  if (!b) return;
+  const a = getAnggota(b.anggotaId);
+  b.status = approve ? "disetujui" : "ditolak";
+  if (approve) {
+    state.transaksi.push({
+      id: "T" + String(state.transaksi.length + 1).padStart(3, "0"),
+      tanggal: b.tanggal, anggotaId: a.id, jenis: a.pinjaman ? "angsuran" : "setoran",
+      jumlah: b.nominal, arah: "masuk", keterangan: b.catatan || (a.pinjaman ? "Angsuran" : "Setoran")
+    });
+    if (a.pinjaman) {
+      a.pinjaman.cicilanTerbayar = Math.min(a.pinjaman.totalCicilan, a.pinjaman.cicilanTerbayar + 1);
+      a.tunggakan = Math.max(0, a.tunggakan - 1);
+      if (a.pinjaman.cicilanTerbayar >= a.pinjaman.totalCicilan) a.pinjaman = null;
+    } else {
+      a.totalSimpanan += b.nominal;
+    }
+  }
+  logAudit(`${approve ? "Menyetujui" : "Menolak"} pembayaran ${a.nama} sebesar ${formatRupiah(b.nominal)}`);
+  saveState(state);
+  renderPembayaran();
+  showToast(approve ? "Pembayaran diverifikasi." : "Bukti ditolak.");
+}
+
+function renderHistori() {
+  const u = currentUser();
+  const scoped = isAdmin() ? state.transaksi : state.transaksi.filter(t => t.anggotaId === u.id);
+  const filtered = histFilterJenis === "semua" ? scoped : scoped.filter(t => t.jenis === histFilterJenis);
+  const sorted = [...filtered].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+  const jenisLabel = { setoran: "Setoran", pinjaman: "Pinjaman", angsuran: "Angsuran" };
+  const jenisIcon = { setoran: "➕", pinjaman: "💰", angsuran: "📄" };
+  const listEl = document.getElementById("histList");
   if (sorted.length === 0) {
-    list.innerHTML = `<div class="activity-empty">Belum ada transaksi.</div>`;
+    listEl.innerHTML = `<div class="activity-empty">Belum ada transaksi.</div>`;
     return;
   }
-  const jenisLabel = { setoran: "Setoran", penarikan: "Penarikan", pinjaman: "Pinjaman", angsuran: "Angsuran" };
-  const jenisIcon = { setoran: "➕", penarikan: "➖", pinjaman: "💰", angsuran: "📄" };
-  list.innerHTML = sorted.map(t => {
+  listEl.innerHTML = sorted.map(t => {
     const a = getAnggota(t.anggotaId);
     const sign = t.arah === "masuk" ? "+" : "-";
     return `
       <div class="activity-item">
         <div class="activity-icon ${t.arah === "masuk" ? "in" : "out"}">${jenisIcon[t.jenis]}</div>
         <div class="activity-main">
-          <div class="activity-title">${jenisLabel[t.jenis]} ${a ? a.nama : "-"}</div>
-          <div class="activity-sub">${formatDate(t.tanggal)}${t.keterangan ? " · " + t.keterangan : ""}</div>
+          <div class="activity-title">${jenisLabel[t.jenis]}${isAdmin() ? " — " + a.nama : ""}</div>
+          <div class="activity-sub">${formatDate(t.tanggal)}${t.keterangan ? " · " + escapeHtml(t.keterangan) : ""}</div>
         </div>
         <div class="activity-amount ${t.arah === "masuk" ? "in" : "out"}">${sign}${formatRupiah(t.jumlah)}</div>
       </div>`;
   }).join("");
 }
 
-/* ===== Notifications ===== */
-function renderNotifBadge() {
-  const due = anggotaJatuhTempoDekat(7);
-  const badge = document.getElementById("notifBadge");
-  if (due.length > 0) {
-    badge.hidden = false;
-    badge.textContent = due.length;
-  } else {
-    badge.hidden = true;
-  }
-}
-
-function openNotifDrawer() {
-  const due = anggotaJatuhTempoDekat(30);
-  const listEl = document.getElementById("notifList");
-  if (due.length === 0) {
-    listEl.innerHTML = `<div class="notif-empty">Tidak ada angsuran jatuh tempo dalam 30 hari ke depan.</div>`;
-  } else {
-    listEl.innerHTML = due.map(x => `
-      <div class="notif-item" data-id="${x.anggota.id}">
-        <div class="notif-emoji">🔔</div>
-        <div>
-          <div class="notif-title">${x.anggota.nama}</div>
-          <div class="notif-sub">Angsuran ${formatRupiah(x.anggota.pinjaman.angsuranBulanan)} jatuh tempo ${x.diffDays === 0 ? "hari ini" : x.diffDays + " hari lagi"}</div>
-        </div>
-      </div>`).join("");
-    listEl.querySelectorAll(".notif-item").forEach(el => {
-      el.addEventListener("click", () => {
-        closeNotifDrawer();
-        openMemberDetail(el.dataset.id);
-      });
-    });
-  }
-  document.getElementById("notifDrawer").hidden = false;
-}
-function closeNotifDrawer() {
-  document.getElementById("notifDrawer").hidden = true;
-}
-
-/* ===== Rendering: Anggota ===== */
+/* ===== ANGGOTA (Transparansi Publik) ===== */
 function renderMemberList(filter = "") {
+  document.getElementById("addAnggotaBtn").hidden = !isAdmin();
   const list = document.getElementById("memberList");
   const q = filter.trim().toLowerCase();
   const filtered = state.anggota.filter(a => a.nama.toLowerCase().includes(q));
@@ -267,91 +543,32 @@ function renderMemberList(filter = "") {
     list.innerHTML = `<div class="empty-state">Anggota tidak ditemukan.</div>`;
     return;
   }
-  list.innerHTML = filtered.map(a => `
+  list.innerHTML = filtered.map(a => {
+    const st = statusPinjaman(a);
+    return `
     <div class="member-card" data-id="${a.id}">
       <div class="member-avatar">${initials(a.nama)}</div>
       <div class="member-main">
-        <div class="member-name">${a.nama}</div>
-        <div class="member-sub">Saldo: ${formatRupiah(a.simpanan)}</div>
+        <div class="member-name">${a.nama}${a.status === "nonaktif" ? " (nonaktif)" : ""}</div>
+        <div class="member-sub">${a.pinjaman ? formatRupiah(a.pinjaman.jumlah) + " · sisa " + formatRupiah(sisaHutang(a.pinjaman)) : "Tidak ada pinjaman"}</div>
       </div>
-      <div class="member-loan-tag ${a.pinjaman ? "" : "none"}">
-        ${a.pinjaman ? "Pinjaman " + formatRupiah(a.pinjaman.sisa) : "Tidak ada"}
-      </div>
-    </div>`).join("");
-  list.querySelectorAll(".member-card").forEach(el => {
-    el.addEventListener("click", () => openMemberDetail(el.dataset.id));
-  });
+      <div class="status-pill ${st.cls}">${st.label}</div>
+    </div>`;
+  }).join("");
+  list.querySelectorAll(".member-card").forEach(el => el.addEventListener("click", () => openMemberDetail(el.dataset.id)));
 }
 
 function openMemberDetail(id) {
   const a = getAnggota(id);
   if (!a) return;
+  const st = statusPinjaman(a);
+  const score = skorKepatuhan(a);
   document.getElementById("memberModalTitle").textContent = a.nama;
-  const maxRiwayat = Math.max(...a.riwayatSimpanan.map(r => r.jumlah), 1);
-  const chartHtml = `
-    <div class="bar-chart">
-      ${a.riwayatSimpanan.map(r => `
-        <div class="bar-col">
-          <div class="bar-value">${(r.jumlah / 1000).toFixed(0)}rb</div>
-          <div class="bar-fill" style="height:${Math.max(6, (r.jumlah / maxRiwayat) * 100)}%"></div>
-          <div class="bar-label">${r.bulan}</div>
-        </div>`).join("")}
-    </div>`;
 
-  document.getElementById("memberModalBody").innerHTML = `
-    <div class="member-detail-header">
-      <div class="member-detail-avatar">${initials(a.nama)}</div>
-      <div>
-        <div class="member-name" style="font-size:16px">${a.nama}</div>
-        <div class="member-detail-code">${a.kode}</div>
-      </div>
-    </div>
-
-    <div class="md-stat-grid">
-      <div class="md-stat">
-        <div class="md-stat-label">Saldo Simpanan</div>
-        <div class="md-stat-value">${formatRupiah(a.simpanan)}</div>
-      </div>
-      <div class="md-stat">
-        <div class="md-stat-label">SHU Diterima</div>
-        <div class="md-stat-value">${formatRupiah(a.shuDiterima)}</div>
-      </div>
-      <div class="md-stat">
-        <div class="md-stat-label">Pinjaman Aktif</div>
-        <div class="md-stat-value">${a.pinjaman ? formatRupiah(a.pinjaman.sisa) : "Tidak ada"}</div>
-      </div>
-      <div class="md-stat">
-        <div class="md-stat-label">Angsuran / Bulan</div>
-        <div class="md-stat-value">${a.pinjaman ? formatRupiah(a.pinjaman.angsuranBulanan) : "-"}</div>
-      </div>
-    </div>
-
-    ${a.pinjaman ? `<div class="notif-sub" style="margin-bottom:12px">Jatuh tempo berikutnya: ${formatDate(a.pinjaman.jatuhTempo)}</div>` : ""}
-
-    <div class="md-section-title">Grafik Simpanan (6 Bulan Terakhir)</div>
-    ${chartHtml}
-
-    <div class="md-section-title">Riwayat Transaksi</div>
-    <div class="activity-list">
-      ${renderMemberActivity(a.id)}
-    </div>
-
-    <div class="md-section-title">Kode Anggota</div>
-    <div class="qr-box">
-      <div class="qr-pattern">${renderQrPattern(a.kode)}</div>
-      <div class="qr-note">Kode unik anggota: <strong>${a.kode}</strong>. Fitur pindai QR kamera belum diimplementasikan pada versi ini — lihat README.</div>
-    </div>
-  `;
-  document.getElementById("memberModalOverlay").hidden = false;
-}
-
-function renderMemberActivity(anggotaId) {
-  const items = state.transaksi.filter(t => t.anggotaId === anggotaId)
-    .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-  if (items.length === 0) return `<div class="activity-empty">Belum ada transaksi.</div>`;
-  const jenisLabel = { setoran: "Setoran", penarikan: "Penarikan", pinjaman: "Pinjaman", angsuran: "Angsuran" };
-  const jenisIcon = { setoran: "➕", penarikan: "➖", pinjaman: "💰", angsuran: "📄" };
-  return items.map(t => `
+  const riwayat = state.transaksi.filter(t => t.anggotaId === a.id).sort((x, y) => new Date(y.tanggal) - new Date(x.tanggal));
+  const jenisLabel = { setoran: "Setoran", pinjaman: "Pinjaman", angsuran: "Angsuran" };
+  const jenisIcon = { setoran: "➕", pinjaman: "💰", angsuran: "📄" };
+  const riwayatHtml = riwayat.length === 0 ? `<div class="activity-empty">Belum ada transaksi.</div>` : riwayat.map(t => `
     <div class="activity-item">
       <div class="activity-icon ${t.arah === "masuk" ? "in" : "out"}">${jenisIcon[t.jenis]}</div>
       <div class="activity-main">
@@ -360,133 +577,289 @@ function renderMemberActivity(anggotaId) {
       </div>
       <div class="activity-amount ${t.arah === "masuk" ? "in" : "out"}">${t.arah === "masuk" ? "+" : "-"}${formatRupiah(t.jumlah)}</div>
     </div>`).join("");
-}
 
-/* Deterministic decorative pixel pattern representing a member code.
-   Not a real scannable QR code — see README for scope notes. */
-function renderQrPattern(code) {
-  let hash = 0;
-  for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) >>> 0;
-  const size = 6;
-  let cells = "";
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const bit = (hash >> ((x + y * size) % 24)) & 1;
-      if (bit) {
-        cells += `<rect x="${x}" y="${y}" width="1" height="1" fill="var(--primary)"/>`;
-      }
-    }
+  document.getElementById("memberModalBody").innerHTML = `
+    <div class="member-detail-header">
+      <div class="member-detail-avatar">${initials(a.nama)}</div>
+      <div>
+        <div class="member-name" style="font-size:16px">${a.nama}</div>
+        <div class="member-detail-code">${a.hp} · Bergabung ${formatDate(a.tanggalBergabung)}</div>
+      </div>
+    </div>
+
+    <div class="md-stat-grid">
+      <div class="md-stat"><div class="md-stat-label">Status Pinjaman</div><div class="md-stat-value"><span class="status-pill ${st.cls}">${st.label}</span></div></div>
+      <div class="md-stat"><div class="md-stat-label">Skor Kepatuhan</div><div class="md-stat-value">${score}/100 <span class="stars">${starsForScore(score)}</span></div></div>
+      <div class="md-stat"><div class="md-stat-label">Total Simpanan</div><div class="md-stat-value">${formatRupiah(a.totalSimpanan)}</div></div>
+      <div class="md-stat"><div class="md-stat-label">Sisa Pinjaman</div><div class="md-stat-value">${a.pinjaman ? formatRupiah(sisaHutang(a.pinjaman)) : "-"}</div></div>
+    </div>
+
+    <div class="md-section-title">Riwayat Transaksi</div>
+    <div class="activity-list">${riwayatHtml}</div>
+
+    ${isAdmin() ? `
+    <div class="md-actions">
+      <button class="btn-outline" id="mdToggleStatusBtn">${a.status === "aktif" ? "Nonaktifkan" : "Aktifkan"} Anggota</button>
+    </div>` : ""}
+  `;
+  document.getElementById("memberModalOverlay").hidden = false;
+
+  if (isAdmin()) {
+    document.getElementById("mdToggleStatusBtn").addEventListener("click", () => {
+      a.status = a.status === "aktif" ? "nonaktif" : "aktif";
+      logAudit(`${a.status === "nonaktif" ? "Menonaktifkan" : "Mengaktifkan"} anggota ${a.nama}`);
+      saveState(state);
+      document.getElementById("memberModalOverlay").hidden = true;
+      renderMemberList(document.getElementById("memberSearch").value);
+      showToast(`Anggota ${a.status === "nonaktif" ? "dinonaktifkan" : "diaktifkan"}.`);
+    });
   }
-  return `<svg viewBox="0 0 ${size} ${size}" width="64" height="64" style="background:var(--card);border-radius:8px">${cells}</svg>`;
 }
 
-/* ===== Rendering: Keuangan ===== */
-function renderKeuangan() {
-  const masuk = kasMasukTotal();
-  const keluar = kasKeluarTotal();
-  document.getElementById("kmKasMasuk").textContent = formatRupiah(masuk);
-  document.getElementById("kmKasKeluar").textContent = formatRupiah(keluar);
-  document.getElementById("kmSaldoAkhir").textContent = formatRupiah(masuk - keluar);
+/* ===== LAINNYA ===== */
+const LAINNYA_ITEMS = [
+  { key: "bukukas", icon: "📒", label: "Buku Kas", adminOnly: false },
+  { key: "timeline", icon: "🗓️", label: "Timeline Periode", adminOnly: false },
+  { key: "auditlog", icon: "🧾", label: "Audit Log", adminOnly: false },
+  { key: "peran", icon: "🔁", label: "Lihat Sebagai (Demo)", adminOnly: false },
+  { key: "tentang", icon: "ℹ️", label: "Tentang & Keterbatasan", adminOnly: false },
+  { key: "keluar", icon: "🚪", label: "Keluar", adminOnly: false, danger: true }
+];
 
-  renderBarChart("chartSimpanan", state.trenBulanan.simpanan, "var(--primary)");
-  renderBarChart("chartPinjaman", state.trenBulanan.pinjaman, "var(--blue)");
-  renderBarChart("chartKas", state.trenBulanan.kas, "var(--secondary)");
+function renderLainnya() {
+  const menuEl = document.getElementById("lainnyaMenu");
+  const subEl = document.getElementById("lainnyaSubview");
+  if (lainnyaView === "menu") {
+    menuEl.hidden = false;
+    subEl.hidden = true;
+    menuEl.innerHTML = LAINNYA_ITEMS.map(item => `
+      <div class="menu-item ${item.danger ? "danger" : ""}" data-key="${item.key}">
+        <div class="menu-item-icon">${item.icon}</div>
+        <div class="menu-item-label">${item.label}</div>
+        <div class="menu-item-chevron">›</div>
+      </div>`).join("");
+    menuEl.querySelectorAll(".menu-item").forEach(el => {
+      el.addEventListener("click", () => {
+        if (el.dataset.key === "keluar") { logout(); return; }
+        lainnyaView = el.dataset.key;
+        renderLainnya();
+      });
+    });
+  } else {
+    menuEl.hidden = true;
+    subEl.hidden = false;
+    subEl.innerHTML = `<div class="subview-header"><button class="back-btn" id="lainnyaBackBtn">←</button><h3>${LAINNYA_ITEMS.find(i => i.key === lainnyaView).label}</h3></div><div id="lainnyaSubContent"></div>`;
+    document.getElementById("lainnyaBackBtn").addEventListener("click", () => { lainnyaView = "menu"; renderLainnya(); });
+    const content = document.getElementById("lainnyaSubContent");
+    if (lainnyaView === "bukukas") renderBukuKas(content);
+    if (lainnyaView === "timeline") renderTimeline(content);
+    if (lainnyaView === "auditlog") renderAuditLog(content);
+    if (lainnyaView === "peran") renderPeranSwitch(content);
+    if (lainnyaView === "tentang") renderTentang(content);
+  }
 }
 
-function renderBarChart(elId, values, color) {
-  const el = document.getElementById(elId);
-  const max = Math.max(...values, 1);
-  const labels = [5, 4, 3, 2, 1, 0].map(monthsAgoLabel);
-  el.innerHTML = `<div class="bar-chart">${values.map((v, i) => `
-    <div class="bar-col">
-      <div class="bar-value">${(v / 1000000).toFixed(1)}jt</div>
-      <div class="bar-fill" style="height:${Math.max(6, (v / max) * 100)}%; background:${color}"></div>
-      <div class="bar-label">${labels[i]}</div>
+function renderBukuKas(content) {
+  const rows = [...state.transaksi].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+  const jenisLabel = { setoran: "Setoran Anggota", pinjaman: "Pencairan Pinjaman", angsuran: "Angsuran" };
+  content.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tanggal</th><th>Keterangan</th><th>Masuk</th><th>Keluar</th></tr></thead>
+        <tbody>
+          ${rows.map(t => {
+            const a = getAnggota(t.anggotaId);
+            const ket = `${jenisLabel[t.jenis]} — ${a ? a.nama : "-"}`;
+            const cancelled = t.dibatalkan;
+            return `<tr class="${cancelled ? "dibatalkan" : ""}" data-tx="${t.id}">
+              <td>${formatDate(t.tanggal)}</td>
+              <td>${escapeHtml(ket)}</td>
+              <td>${t.arah === "masuk" ? formatRupiah(t.jumlah) : "-"}</td>
+              <td>${t.arah === "keluar" ? formatRupiah(t.jumlah) : "-"}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="form-note" style="margin-top:10px">Transaksi tidak pernah dihapus — hanya dapat dibatalkan (audit trail tetap tersimpan).</div>
+  `;
+}
+
+function renderTimeline(content) {
+  let boxes = "";
+  for (let i = 1; i <= state.totalPeriode; i++) {
+    const cls = i < state.periodeSekarang ? "done" : i === state.periodeSekarang ? "current" : "";
+    const icon = i < state.periodeSekarang ? "✓" : i === state.periodeSekarang ? "●" : "";
+    boxes += `<div class="periode-box ${cls}"><div class="p-icon">${icon}</div>Periode ${i}</div>`;
+  }
+  content.innerHTML = `<div class="timeline-periode">${boxes}</div>
+    <div class="form-note" style="margin-top:14px">SEKE MESARI berjalan dalam siklus ${state.totalPeriode} periode pembayaran. Saat ini periode ke-${state.periodeSekarang}.</div>`;
+}
+
+function renderAuditLog(content) {
+  if (state.auditLog.length === 0) {
+    content.innerHTML = `<div class="activity-empty">Belum ada aktivitas admin tercatat.</div>`;
+    return;
+  }
+  content.innerHTML = `<div class="activity-list">${state.auditLog.map(l => `
+    <div class="activity-item">
+      <div class="activity-icon in">🧾</div>
+      <div class="activity-main">
+        <div class="activity-title">${escapeHtml(l.actor)}</div>
+        <div class="activity-sub">${escapeHtml(l.aksi)}</div>
+        <div class="activity-sub">${formatDateTime(l.waktu)}</div>
+      </div>
     </div>`).join("")}</div>`;
 }
 
-/* ===== Rendering: Laporan ===== */
-let laporanState = { period: "hari", type: "simpanan", from: null, to: null };
-
-function periodRange() {
-  const now = new Date();
-  if (laporanState.period === "hari") {
-    const d = now.toISOString().slice(0, 10);
-    return [d, d];
-  }
-  if (laporanState.period === "bulan") {
-    const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-    return [from, now.toISOString().slice(0, 10)];
-  }
-  if (laporanState.period === "tahun") {
-    const from = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
-    return [from, now.toISOString().slice(0, 10)];
-  }
-  return [laporanState.from || "0000-01-01", laporanState.to || "9999-12-31"];
+function renderPeranSwitch(content) {
+  const u = currentUser();
+  content.innerHTML = `
+    <div class="form-note" style="margin-bottom:12px">Khusus demo/pratinjau: lihat tampilan aplikasi sebagai peran lain tanpa logout. Ini tidak mengubah akun sungguhan.</div>
+    <div class="role-switch">
+      <button id="roleAnggotaBtn" class="${!viewAsAdmin ? "active" : ""}">Lihat sebagai Anggota</button>
+      <button id="roleAdminBtn" class="${viewAsAdmin ? "active" : ""}">Lihat sebagai Admin</button>
+    </div>
+  `;
+  document.getElementById("roleAdminBtn").addEventListener("click", () => {
+    if (u.role !== "admin") { showToast("Akun ini bukan admin — login sebagai admin untuk peran nyata."); return; }
+    viewAsAdmin = true;
+    document.querySelectorAll(".admin-only").forEach(el => el.hidden = false);
+    renderLainnya();
+    renderHome(); renderPinjaman(); renderPembayaran(); renderMemberList();
+  });
+  document.getElementById("roleAnggotaBtn").addEventListener("click", () => {
+    viewAsAdmin = false;
+    document.querySelectorAll(".admin-only").forEach(el => el.hidden = true);
+    renderLainnya();
+    renderHome(); renderPinjaman(); renderPembayaran(); renderMemberList();
+  });
 }
 
-function renderLaporan() {
-  const [from, to] = periodRange();
-  const thead = document.getElementById("reportThead");
-  const tbody = document.getElementById("reportTbody");
-  const emptyEl = document.getElementById("reportEmpty");
-  const table = document.getElementById("reportTable");
+function renderTentang(content) {
+  content.innerHTML = `
+    <div class="info-box">
+      <h4>Tentang</h4>
+      Aplikasi arisan &amp; pinjaman keluarga untuk SEKE MESARI. Versi ini berjalan sepenuhnya di browser (data tersimpan di localStorage), belum terhubung ke server/database sungguhan.
 
-  let rows = [];
-  let headers = [];
+      <h4>Belum diimplementasikan</h4>
+      Login &amp; OTP di aplikasi ini adalah <strong>simulasi tampilan</strong> — password dan kode OTP tidak diverifikasi ke sistem otentikasi nyata (tidak ada WA/Email OTP asli, tidak ada 2FA sungguhan). Jangan gunakan untuk data keanggotaan/keuangan nyata sebelum backend dibangun.<br><br>
+      Belum ada notifikasi WhatsApp/push sungguhan — pengingat hanya muncul di dalam aplikasi.<br><br>
+      Foto bukti pembayaran disimpan sementara di browser (localStorage), bukan di penyimpanan cloud — bisa hilang jika cache browser dibersihkan.<br><br>
+      Tidak ada sinkronisasi antar perangkat — setiap anggota yang membuka di HP masing-masing akan melihat data contoh yang sama, bukan data bersama secara real-time.
 
-  if (laporanState.type === "shu") {
-    headers = ["Anggota", "Kode", "Simpanan", "SHU Diterima"];
-    rows = state.anggota.map(a => [a.nama, a.kode, formatRupiah(a.simpanan), formatRupiah(a.shuDiterima)]);
-  } else {
-    const jenisMap = { simpanan: "setoran", pinjaman: "pinjaman", angsuran: "angsuran" };
-    const jenis = jenisMap[laporanState.type];
-    const filtered = state.transaksi.filter(t => t.jenis === jenis && t.tanggal >= from && t.tanggal <= to)
-      .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-    headers = ["Tanggal", "Anggota", "Keterangan", "Jumlah"];
-    rows = filtered.map(t => {
-      const a = getAnggota(t.anggotaId);
-      return [formatDate(t.tanggal), a ? a.nama : "-", t.keterangan || "-", formatRupiah(t.jumlah)];
+      <h4>Rencana tahap berikutnya</h4>
+      Backend nyata (database + storage + autentikasi + OTP WA/Email + push notification) sesuai kebutuhan, agar data kas, pinjaman, dan pembayaran benar-benar tersinkronisasi dan aman untuk seluruh anggota.
+    </div>
+  `;
+}
+
+/* ===== Modals: Ajukan Pinjaman ===== */
+function initPinjamanModal() {
+  document.getElementById("ajukanPinjamanBtn").addEventListener("click", () => {
+    document.getElementById("pinjamanForm").reset();
+    document.getElementById("pinjamanModalOverlay").hidden = false;
+  });
+  document.getElementById("pinjamanModalCloseBtn").addEventListener("click", () => {
+    document.getElementById("pinjamanModalOverlay").hidden = true;
+  });
+  document.getElementById("pinjamanModalOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "pinjamanModalOverlay") document.getElementById("pinjamanModalOverlay").hidden = true;
+  });
+  document.getElementById("pinjamanForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const u = currentUser();
+    if (u.pinjaman) { showToast("Anda masih memiliki pinjaman aktif."); return; }
+    const jumlah = Number(document.getElementById("pinjamanJumlah").value);
+    const tujuan = document.getElementById("pinjamanTujuan").value.trim();
+    state.pengajuanPinjaman.push({
+      id: "PJ" + String(state.pengajuanPinjaman.length + 1).padStart(3, "0"),
+      anggotaId: u.id, jumlah, tujuan, status: "menunggu", createdAt: todayIso()
     });
-  }
-
-  thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
-  if (rows.length === 0) {
-    tbody.innerHTML = "";
-    table.hidden = true;
-    emptyEl.hidden = false;
-  } else {
-    table.hidden = false;
-    emptyEl.hidden = true;
-    tbody.innerHTML = rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("");
-  }
+    saveState(state);
+    document.getElementById("pinjamanModalOverlay").hidden = true;
+    showToast("Pengajuan pinjaman terkirim, menunggu persetujuan admin.");
+    renderPinjaman();
+  });
 }
 
-function exportReportToExcel() {
-  const table = document.getElementById("reportTable");
-  if (table.hidden) return showToast("Tidak ada data untuk diekspor.");
-  const rows = [...table.querySelectorAll("tr")].map(tr =>
-    [...tr.children].map(td => `"${td.textContent.replace(/"/g, '""')}"`).join(",")
-  );
-  const csv = rows.join("\r\n");
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `laporan-${laporanState.type}-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  showToast("Laporan diunduh (CSV, dapat dibuka di Excel).");
+/* ===== Modals: Upload Bukti ===== */
+function initBuktiModal() {
+  const open = () => {
+    document.getElementById("buktiForm").reset();
+    document.getElementById("buktiPreview").hidden = true;
+    document.getElementById("buktiTanggal").value = todayIso();
+    document.getElementById("buktiModalOverlay").hidden = false;
+  };
+  document.getElementById("uploadBuktiBtnPinjaman").addEventListener("click", open);
+  document.getElementById("uploadBuktiBtnPembayaran").addEventListener("click", open);
+  document.getElementById("buktiModalCloseBtn").addEventListener("click", () => { document.getElementById("buktiModalOverlay").hidden = true; });
+  document.getElementById("buktiModalOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "buktiModalOverlay") document.getElementById("buktiModalOverlay").hidden = true;
+  });
+  document.getElementById("buktiFoto").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    const preview = document.getElementById("buktiPreview");
+    if (!file) { preview.hidden = true; return; }
+    const reader = new FileReader();
+    reader.onload = () => { preview.src = reader.result; preview.hidden = false; };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById("buktiForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const u = currentUser();
+    const nominal = Number(document.getElementById("buktiNominal").value);
+    const tanggal = document.getElementById("buktiTanggal").value;
+    const catatan = document.getElementById("buktiCatatan").value.trim();
+    state.buktiPembayaran.push({
+      id: "B" + String(state.buktiPembayaran.length + 1).padStart(3, "0"),
+      anggotaId: u.id, tanggal, nominal, catatan, status: "menunggu", createdAt: nowIso()
+    });
+    saveState(state);
+    document.getElementById("buktiModalOverlay").hidden = true;
+    showToast("Bukti pembayaran terkirim, menunggu verifikasi admin.");
+    renderPembayaran();
+  });
 }
 
-function exportReportToPdf() {
-  const table = document.getElementById("reportTable");
-  if (table.hidden) return showToast("Tidak ada data untuk diekspor.");
-  document.querySelector("#tab-laporan .section-block:last-child").classList.add("print-target");
-  window.print();
-  document.querySelector("#tab-laporan .section-block:last-child").classList.remove("print-target");
+/* ===== Modal: Tambah Anggota ===== */
+function initAnggotaModal() {
+  document.getElementById("addAnggotaBtn").addEventListener("click", () => {
+    document.getElementById("anggotaForm").reset();
+    document.getElementById("anggotaFormOverlay").hidden = false;
+  });
+  document.getElementById("anggotaFormCloseBtn").addEventListener("click", () => { document.getElementById("anggotaFormOverlay").hidden = true; });
+  document.getElementById("anggotaFormOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "anggotaFormOverlay") document.getElementById("anggotaFormOverlay").hidden = true;
+  });
+  document.getElementById("anggotaForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nama = document.getElementById("anggotaNama").value.trim();
+    const hp = document.getElementById("anggotaHp").value.trim();
+    if (state.anggota.some(a => a.hp === hp)) { showToast("Nomor HP sudah terdaftar."); return; }
+    state.anggota.push({
+      id: "A" + String(state.anggota.length + 1).padStart(3, "0"),
+      nama, hp, password: "anggota123", role: "anggota",
+      tanggalBergabung: todayIso(), status: "aktif", totalSimpanan: 0, tunggakan: 0, pinjaman: null
+    });
+    logAudit(`Menambahkan anggota baru: ${nama}`);
+    saveState(state);
+    document.getElementById("anggotaFormOverlay").hidden = true;
+    showToast("Anggota baru ditambahkan (password default: anggota123).");
+    renderMemberList();
+  });
+}
+
+/* ===== Add Pengumuman ===== */
+function initPengumumanModal() {
+  document.getElementById("addPengumumanBtn").addEventListener("click", () => {
+    const teks = prompt("Isi pengumuman:");
+    if (!teks || !teks.trim()) return;
+    state.pengumuman.push({ id: "P" + (state.pengumuman.length + 1), teks: teks.trim(), tanggal: todayIso() });
+    logAudit(`Menambahkan pengumuman: ${teks.trim()}`);
+    saveState(state);
+    renderHome();
+  });
 }
 
 /* ===== Toast ===== */
@@ -497,106 +870,6 @@ function showToast(msg) {
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, 2500);
-}
-
-/* ===== Tabs ===== */
-const TAB_LABELS = { dashboard: "Dashboard", anggota: "Anggota", keuangan: "Keuangan", laporan: "Laporan" };
-function switchTab(tab) {
-  document.querySelectorAll(".tab-panel").forEach(el => el.hidden = true);
-  document.getElementById("tab-" + tab).hidden = false;
-  document.querySelectorAll(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.tab === tab));
-  document.getElementById("topbarSub").textContent = TAB_LABELS[tab];
-  if (tab === "anggota") renderMemberList(document.getElementById("memberSearch").value);
-  if (tab === "keuangan") renderKeuangan();
-  if (tab === "laporan") renderLaporan();
-}
-
-/* ===== Quick action modal ===== */
-const ACTION_CONFIG = {
-  setoran: { title: "Setoran", label: "Jumlah Setoran (Rp)", jenis: "setoran", arah: "masuk" },
-  penarikan: { title: "Penarikan", label: "Jumlah Penarikan (Rp)", jenis: "penarikan", arah: "keluar" },
-  pinjaman: { title: "Pengajuan Pinjaman", label: "Jumlah Pinjaman (Rp)", jenis: "pinjaman", arah: "keluar" },
-  angsuran: { title: "Bayar Angsuran", label: "Jumlah Angsuran (Rp)", jenis: "angsuran", arah: "masuk" }
-};
-let currentAction = null;
-
-function fillAnggotaSelect() {
-  const sel = document.getElementById("modalAnggota");
-  sel.innerHTML = state.anggota.map(a => `<option value="${a.id}">${a.nama}</option>`).join("");
-}
-
-function openActionModal(action) {
-  currentAction = action;
-  const cfg = ACTION_CONFIG[action];
-  document.getElementById("modalTitle").textContent = cfg.title;
-  document.getElementById("modalAmountLabel").textContent = cfg.label;
-  fillAnggotaSelect();
-  document.getElementById("modalAmount").value = "";
-  document.getElementById("modalNote").value = "";
-  document.getElementById("modalOverlay").hidden = false;
-}
-function closeActionModal() {
-  document.getElementById("modalOverlay").hidden = true;
-  currentAction = null;
-}
-
-function submitActionForm(e) {
-  e.preventDefault();
-  const cfg = ACTION_CONFIG[currentAction];
-  const anggotaId = document.getElementById("modalAnggota").value;
-  const jumlah = Number(document.getElementById("modalAmount").value);
-  const note = document.getElementById("modalNote").value.trim();
-  const a = getAnggota(anggotaId);
-  if (!a || !jumlah || jumlah <= 0) return;
-
-  if (cfg.jenis === "penarikan" && jumlah > a.simpanan) {
-    showToast("Saldo simpanan tidak mencukupi.");
-    return;
-  }
-  if (cfg.jenis === "angsuran" && (!a.pinjaman || a.pinjaman.sisa <= 0)) {
-    showToast("Anggota ini tidak memiliki pinjaman aktif.");
-    return;
-  }
-
-  const tx = {
-    id: "T" + String(state.transaksi.length + 1).padStart(3, "0"),
-    tanggal: new Date().toISOString().slice(0, 10),
-    anggotaId: a.id,
-    jenis: cfg.jenis,
-    jumlah,
-    arah: cfg.arah,
-    keterangan: note || cfg.title
-  };
-  state.transaksi.push(tx);
-
-  if (cfg.jenis === "setoran") a.simpanan += jumlah;
-  if (cfg.jenis === "penarikan") a.simpanan -= jumlah;
-  if (cfg.jenis === "pinjaman") {
-    const existingSisa = a.pinjaman ? a.pinjaman.sisa : 0;
-    a.pinjaman = {
-      total: (a.pinjaman ? a.pinjaman.total : 0) + jumlah,
-      sisa: existingSisa + jumlah,
-      angsuranBulanan: a.pinjaman ? a.pinjaman.angsuranBulanan : Math.round(jumlah / 12),
-      jatuhTempo: a.pinjaman ? a.pinjaman.jatuhTempo : daysFromNow(30)
-    };
-  }
-  if (cfg.jenis === "angsuran") {
-    a.pinjaman.sisa = Math.max(0, a.pinjaman.sisa - jumlah);
-    if (a.pinjaman.sisa === 0) {
-      a.pinjaman = null;
-    } else {
-      const next = new Date(a.pinjaman.jatuhTempo);
-      next.setMonth(next.getMonth() + 1);
-      a.pinjaman.jatuhTempo = next.toISOString().slice(0, 10);
-    }
-  }
-
-  state.kasKoperasi += cfg.arah === "masuk" ? jumlah : -jumlah;
-
-  saveState(state);
-  closeActionModal();
-  renderDashboard();
-  showToast(cfg.title + " berhasil dicatat.");
 }
 
 /* ===== Theme ===== */
@@ -619,25 +892,17 @@ function toggleTheme() {
 function init() {
   const savedTheme = localStorage.getItem(THEME_KEY);
   if (savedTheme) applyTheme(savedTheme);
-  else document.getElementById("themeBtn").textContent =
-    window.matchMedia("(prefers-color-scheme: dark)").matches ? "☀️" : "🌙";
+  else document.getElementById("themeBtn").textContent = window.matchMedia("(prefers-color-scheme: dark)").matches ? "☀️" : "🌙";
 
-  document.querySelectorAll(".nav-item").forEach(btn => {
-    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-  });
+  initLogin();
+  initPinjamanModal();
+  initBuktiModal();
+  initAnggotaModal();
+  initPengumumanModal();
 
-  document.querySelectorAll(".qa-btn").forEach(btn => {
-    btn.addEventListener("click", () => openActionModal(btn.dataset.action));
-  });
-  document.getElementById("modalCloseBtn").addEventListener("click", closeActionModal);
-  document.getElementById("modalOverlay").addEventListener("click", (e) => {
-    if (e.target.id === "modalOverlay") closeActionModal();
-  });
-  document.getElementById("modalForm").addEventListener("submit", submitActionForm);
+  document.querySelectorAll(".nav-item").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
 
-  document.getElementById("memberModalCloseBtn").addEventListener("click", () => {
-    document.getElementById("memberModalOverlay").hidden = true;
-  });
+  document.getElementById("memberModalCloseBtn").addEventListener("click", () => { document.getElementById("memberModalOverlay").hidden = true; });
   document.getElementById("memberModalOverlay").addEventListener("click", (e) => {
     if (e.target.id === "memberModalOverlay") document.getElementById("memberModalOverlay").hidden = true;
   });
@@ -646,37 +911,23 @@ function init() {
 
   document.getElementById("notifBtn").addEventListener("click", openNotifDrawer);
   document.getElementById("notifCloseBtn").addEventListener("click", closeNotifDrawer);
-  document.getElementById("notifDrawer").addEventListener("click", (e) => {
-    if (e.target.id === "notifDrawer") closeNotifDrawer();
-  });
+  document.getElementById("notifDrawer").addEventListener("click", (e) => { if (e.target.id === "notifDrawer") closeNotifDrawer(); });
 
   document.getElementById("themeBtn").addEventListener("click", toggleTheme);
 
-  document.querySelectorAll("#periodFilter .filter-chip").forEach(btn => {
+  document.querySelectorAll("#histFilter .filter-chip").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("#periodFilter .filter-chip").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll("#histFilter .filter-chip").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      laporanState.period = btn.dataset.period;
-      document.getElementById("customRange").hidden = laporanState.period !== "custom";
-      renderLaporan();
-    });
-  });
-  document.getElementById("dateFrom").addEventListener("change", (e) => { laporanState.from = e.target.value; renderLaporan(); });
-  document.getElementById("dateTo").addEventListener("change", (e) => { laporanState.to = e.target.value; renderLaporan(); });
-
-  document.querySelectorAll("#reportTypeFilter .filter-chip").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll("#reportTypeFilter .filter-chip").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      laporanState.type = btn.dataset.type;
-      renderLaporan();
+      histFilterJenis = btn.dataset.jenis;
+      renderHistori();
     });
   });
 
-  document.getElementById("exportExcelBtn").addEventListener("click", exportReportToExcel);
-  document.getElementById("exportPdfBtn").addEventListener("click", exportReportToPdf);
-
-  renderDashboard();
+  if (session && getAnggota(session.anggotaId)) {
+    viewAsAdmin = getAnggota(session.anggotaId).role === "admin";
+    enterApp();
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);
