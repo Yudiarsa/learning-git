@@ -19,8 +19,9 @@ otomatis dengan **data contoh** saat pertama kali dibuka.
 
 ## Login demo
 
-Login/OTP di versi ini adalah **simulasi tampilan**, bukan sistem
-otentikasi sungguhan — lihat bagian Keamanan di bawah.
+Login (HP + password, satu langkah, tanpa OTP) hanya untuk membedakan
+tampilan tiap anggota — bukan sistem otentikasi sungguhan. Lihat bagian
+Keamanan di bawah untuk alasannya.
 
 | Nama | HP | Password | Peran |
 |---|---|---|---|
@@ -34,9 +35,6 @@ otentikasi sungguhan — lihat bagian Keamanan di bawah.
 | Kadek | 081111000008 | kadek123 | Anggota (tanpa pinjaman) |
 | Wayan Sari | 081111000009 | sari123 | Anggota (tanpa pinjaman) |
 | Made Ayu | 081111000010 | ayu123 | Anggota (menunggak 1x) |
-
-Kode OTP ditampilkan langsung di layar (`Kode demo: ...`) karena belum
-ada pengiriman WA/Email sungguhan.
 
 ## Struktur Menu (5 Tab)
 
@@ -75,33 +73,40 @@ assets/style.css  tema, layout mobile-first, dark mode
 assets/app.js     data contoh, state, autentikasi (simulasi), rendering, logika bisnis
 ```
 
-## Catatan & Batasan (belum diimplementasikan)
+## Keamanan (batasan yang disengaja, bukan sekadar "belum sempat")
 
-- **Keamanan/otentikasi**: login (nomor HP + password) dan OTP di
-  aplikasi ini adalah **simulasi UI** — tidak ada verifikasi ke server,
-  tidak ada hashing password, kode OTP ditampilkan di layar yang sama.
-  **Jangan gunakan untuk data anggota/keuangan sungguhan** sebelum
-  backend otentikasi nyata (mis. Supabase Auth + OTP WA/Email) dibangun.
+Aplikasi ini sengaja dibuat tanpa backend/API — sesuai kebutuhan: tidak
+ada transaksi uang riil yang diproses aplikasi, dan tidak terkoneksi ke
+mobile banking. Konsekuensinya perlu dipahami, bukan diabaikan:
+
+- **Login satu langkah (HP + password) hanya untuk identifikasi**, bukan
+  proteksi keamanan. Karena tidak ada server, semua password (dan semua
+  data anggota) ada di dalam `assets/app.js` yang bisa dibaca siapa pun
+  yang membuka kode sumber halaman — juga bisa dilewati langsung lewat
+  browser console. Ini bukan bug, ini konsekuensi struktural dari
+  arsitektur client-only.
+- **Cocok untuk**: dipakai internal antar anggota SEKE MESARI yang saling
+  percaya, link tidak disebar ke luar kelompok.
+- **Tidak cocok untuk**: data yang harus benar-benar rahasia dari sesama
+  anggota, atau situasi di mana seseorang bisa punya insentif membuka
+  kode sumber untuk melihat/mengubah data anggota lain.
+- Jika di masa depan aplikasi ini perlu menyimpan uang riil atau
+  terhubung ke sistem pembayaran, arsitektur ini **harus** diganti dengan
+  backend + autentikasi sungguhan — jangan menambah fitur uang riil di
+  atas fondasi client-only ini.
+
+## Batasan lain
+
 - **Tidak ada backend/database**: semua data tersimpan lokal per browser
   (localStorage) — tidak disinkronkan antar perangkat/anggota. Setiap
-  orang yang membuka aplikasi ini akan melihat data contoh yang sama,
-  bukan data bersama secara real-time.
-- **Foto bukti pembayaran** disimpan sebagai data URL di localStorage,
-  bukan di object storage — ukurannya terbatas dan bisa hilang jika
-  cache browser dibersihkan.
+  anggota yang membuka aplikasi ini melihat data lokalnya sendiri, bukan
+  data bersama secara real-time.
+- **Foto bukti pembayaran** disimpan sebagai data URL di localStorage —
+  ukurannya terbatas dan bisa hilang jika cache browser dibersihkan.
 - **Notifikasi**: pengingat jatuh tempo hanya muncul di dalam aplikasi
-  (drawer 🔔), belum ada push notification atau pesan WhatsApp
-  sungguhan.
-- **Audit log** mencatat aksi admin sejak sesi ini dibuka (disimpan di
-  state yang sama dengan data lain) — bukan log tingkat sistem yang
-  tidak bisa dimodifikasi.
+  (drawer 🔔), tidak ada push notification atau pesan WhatsApp.
+- **Audit log** tersimpan di state yang sama dengan data lain (localStorage)
+  — bukan log tingkat sistem yang tidak bisa dimodifikasi.
 - Data awal (nama anggota, saldo, transaksi, pengumuman) adalah
   **data contoh** untuk demo tampilan, bukan data SEKE MESARI yang
   sesungguhnya.
-
-## Rencana tahap berikutnya
-
-Sesuai arahan awal: Next.js + Supabase (Postgres + Storage + Auth) untuk
-backend nyata, OTP WhatsApp/Email untuk 2FA sungguhan, dan Firebase (atau
-web push) untuk notifikasi jatuh tempo — menggantikan simulasi di versi
-ini satu per satu tanpa mengubah alur UI yang sudah ada.

@@ -181,10 +181,10 @@ function pengingatList() {
     .sort((a, b) => a.diffDays - b.diffDays);
 }
 
-/* ===== Login flow ===== */
-let pendingLoginHp = null;
-let demoOtp = null;
-
+/* ===== Login flow =====
+   Satu langkah (HP + password), tanpa OTP. Ini hanya untuk membedakan
+   tampilan tiap anggota, bukan proteksi keamanan sungguhan — lihat
+   README bagian Keamanan. */
 function initLogin() {
   document.getElementById("loginStep1").addEventListener("submit", (e) => {
     e.preventDefault();
@@ -199,26 +199,6 @@ function initLogin() {
       showToast("Akun anggota ini nonaktif.");
       return;
     }
-    pendingLoginHp = hp;
-    demoOtp = String(Math.floor(100000 + Math.random() * 900000));
-    document.getElementById("otpHint").textContent = demoOtp;
-    document.getElementById("loginStep1").hidden = true;
-    document.getElementById("loginStep2").hidden = false;
-  });
-
-  document.getElementById("backToStep1").addEventListener("click", () => {
-    document.getElementById("loginStep2").hidden = true;
-    document.getElementById("loginStep1").hidden = false;
-  });
-
-  document.getElementById("loginStep2").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const otp = document.getElementById("loginOtp").value.trim();
-    if (otp !== demoOtp) {
-      showToast("Kode OTP salah.");
-      return;
-    }
-    const a = state.anggota.find(x => x.hp === pendingLoginHp);
     session = { anggotaId: a.id };
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     viewAsAdmin = a.role === "admin";
@@ -232,9 +212,6 @@ function logout() {
   document.getElementById("appShell").hidden = true;
   document.getElementById("loginScreen").hidden = false;
   document.getElementById("loginStep1").reset();
-  document.getElementById("loginStep2").reset();
-  document.getElementById("loginStep1").hidden = false;
-  document.getElementById("loginStep2").hidden = true;
 }
 
 function enterApp() {
@@ -740,16 +717,13 @@ function renderTentang(content) {
   content.innerHTML = `
     <div class="info-box">
       <h4>Tentang</h4>
-      Aplikasi arisan &amp; pinjaman keluarga untuk SEKE MESARI. Versi ini berjalan sepenuhnya di browser (data tersimpan di localStorage), belum terhubung ke server/database sungguhan.
+      Aplikasi arisan &amp; pinjaman keluarga untuk SEKE MESARI. Sengaja dibuat sederhana: berjalan sepenuhnya di browser (data tersimpan di localStorage), tanpa server, database, atau API eksternal.
 
-      <h4>Belum diimplementasikan</h4>
-      Login &amp; OTP di aplikasi ini adalah <strong>simulasi tampilan</strong> — password dan kode OTP tidak diverifikasi ke sistem otentikasi nyata (tidak ada WA/Email OTP asli, tidak ada 2FA sungguhan). Jangan gunakan untuk data keanggotaan/keuangan nyata sebelum backend dibangun.<br><br>
-      Belum ada notifikasi WhatsApp/push sungguhan — pengingat hanya muncul di dalam aplikasi.<br><br>
-      Foto bukti pembayaran disimpan sementara di browser (localStorage), bukan di penyimpanan cloud — bisa hilang jika cache browser dibersihkan.<br><br>
-      Tidak ada sinkronisasi antar perangkat — setiap anggota yang membuka di HP masing-masing akan melihat data contoh yang sama, bukan data bersama secara real-time.
-
-      <h4>Rencana tahap berikutnya</h4>
-      Backend nyata (database + storage + autentikasi + OTP WA/Email + push notification) sesuai kebutuhan, agar data kas, pinjaman, dan pembayaran benar-benar tersinkronisasi dan aman untuk seluruh anggota.
+      <h4>Batasan yang perlu diketahui</h4>
+      Login (HP + password) hanya untuk membedakan tampilan tiap anggota — <strong>bukan proteksi keamanan sungguhan</strong>. Karena tanpa server, semua data (termasuk password) ada di kode yang bisa dibaca siapa pun yang membuka sumber halaman. Cocok dipakai internal antar anggota yang saling percaya, bukan untuk data yang benar-benar harus rahasia.<br><br>
+      Pengingat jatuh tempo hanya muncul di dalam aplikasi — tidak ada notifikasi WhatsApp/push ke HP.<br><br>
+      Foto bukti pembayaran disimpan di browser (localStorage) — bisa hilang jika cache dibersihkan.<br><br>
+      Tidak ada sinkronisasi antar perangkat — tiap anggota yang membuka di HP masing-masing melihat data lokalnya sendiri, bukan data bersama secara real-time.
     </div>
   `;
 }

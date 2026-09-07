@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<!-- ============ LOGIN (mock, phase-1) ============ -->
+<!-- ============ LOGIN (identifikasi anggota, tanpa backend) ============ -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <div class="login-logo">SM</div>
@@ -20,19 +20,11 @@
       <input type="tel" id="loginHp" placeholder="08xxxxxxxxxx" required>
       <label>Password</label>
       <input type="password" id="loginPassword" placeholder="Password" required>
-      <button type="submit" class="btn-primary">Lanjut</button>
+      <button type="submit" class="btn-primary">Masuk</button>
       <div class="login-hint">Demo Admin: HP <strong>081111000001</strong> / password <strong>admin123</strong> (Gede). Anggota lain &amp; password: lihat README.</div>
     </form>
 
-    <form id="loginStep2" class="login-form" hidden>
-      <label>Kode OTP</label>
-      <input type="text" id="loginOtp" placeholder="6 digit" inputmode="numeric" maxlength="6" required>
-      <button type="submit" class="btn-primary">Masuk</button>
-      <div class="login-hint">Kode demo: <strong id="otpHint">000000</strong> (OTP simulasi — belum terhubung WA/Email sungguhan)</div>
-      <button type="button" class="btn-link" id="backToStep1">← Kembali</button>
-    </form>
-
-    <div class="login-note">⚠️ Ini simulasi login untuk pratinjau UI. Password dan OTP tidak diverifikasi ke sistem nyata — lihat README bagian keamanan sebelum dipakai anggota sungguhan.</div>
+    <div class="login-note">⚠️ Aplikasi ini berjalan sepenuhnya di browser (tanpa server). Login hanya untuk membedakan tampilan tiap anggota, bukan proteksi keamanan sungguhan — siapa pun yang bisa membuka kode sumbernya bisa melihat semua password. Cocok dipakai internal antar anggota yang saling percaya, bukan untuk data yang perlu benar-benar rahasia. Lihat README bagian Keamanan.</div>
   </div>
 </div>
 
