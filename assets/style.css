@@ -712,6 +712,59 @@ tr.dibatalkan td { text-decoration: line-through; opacity: 0.5; }
   font-size: 15px;
 }
 
+/* ===== Neraca (balance sheet) ===== */
+.neraca-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.neraca-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.neraca-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.neraca-row:last-child { border-bottom: none; }
+.neraca-label { font-size: 13px; color: var(--text); }
+.neraca-value {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.neraca-row.neraca-total {
+  border-top: 2px solid var(--text);
+  border-bottom: none;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+.neraca-row.neraca-total .neraca-label,
+.neraca-row.neraca-total .neraca-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.neraca-balance-badge {
+  margin-top: 12px;
+  background: var(--green-bg);
+  color: var(--green);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
 /* ===== Timeline periode ===== */
 .timeline-periode { display: flex; flex-wrap: wrap; gap: 10px; }
 .periode-box {

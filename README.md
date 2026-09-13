@@ -52,9 +52,10 @@ Keamanan di bawah untuk alasannya.
   detail (skor kepatuhan, riwayat transaksi); admin bisa tambah/nonaktifkan
   anggota.
 - **Lainnya** — Buku Kas (ledger masuk/keluar, transaksi hanya bisa
-  dibatalkan, tidak dihapus), Timeline Periode (1–10), Audit Log,
-  "Lihat Sebagai" (demo ganti peran admin/anggota tanpa logout), Tentang
-  & Keterbatasan, Keluar.
+  dibatalkan, tidak dihapus), Neraca Keuangan (snapshot posisi keuangan:
+  Aset vs Kewajiban & Ekuitas, format dua kolom), Timeline Periode (1–10),
+  Audit Log, "Lihat Sebagai" (demo ganti peran admin/anggota tanpa
+  logout), Tentang & Keterbatasan, Keluar.
 
 ## Aturan bisnis yang diterapkan
 
@@ -64,6 +65,13 @@ Keamanan di bawah untuk alasannya.
   1–2 = Menunggak Nx, ≥3 = **Perlu Evaluasi Keanggotaan** (bukan
   penghapusan otomatis — keputusan tetap di tangan admin).
 - Skor kepatuhan = `100 − (tunggakan × 15)`, minimum 35.
+- **Neraca Keuangan**: Aset = Kas Koperasi + Piutang Pinjaman Anggota
+  (pokok yang belum kembali). Kewajiban = total Simpanan Anggota. Ekuitas
+  ("SHU / Laba Ditahan") dihitung sebagai *selisih* Aset dikurangi
+  Kewajiban — bukan ditebak dari bunga per transaksi — sehingga neraca
+  selalu balance sesuai persamaan akuntansi dasar (Aset = Kewajiban +
+  Ekuitas), bahkan saat admin memverifikasi nominal pembayaran yang tidak
+  persis mengikuti rumus angsuran.
 
 ## Struktur Berkas
 

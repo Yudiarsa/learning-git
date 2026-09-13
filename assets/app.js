@@ -159,6 +159,26 @@ function kasTerkumpul() {
 function pinjamanBeredar() {
   return state.anggota.reduce((s, a) => s + (a.pinjaman ? sisaHutang(a.pinjaman) : 0), 0);
 }
+function totalSimpananAnggota() {
+  return state.anggota.reduce((s, a) => s + a.totalSimpanan, 0);
+}
+/* Neraca (balance sheet). Aset = Kas + Piutang Pinjaman (pokok yang
+   belum kembali). Kewajiban = Simpanan Anggota (dana titipan yang jadi
+   tanggungan koperasi ke anggota). Ekuitas dihitung sebagai SISA
+   (Aset − Kewajiban), bukan ditebak dari bunga per transaksi — supaya
+   neraca selalu balance secara definisi, sesuai persamaan akuntansi
+   dasar (Aset = Kewajiban + Ekuitas), dan tetap benar walau nominal
+   pembayaran yang diverifikasi admin tidak persis mengikuti rumus
+   angsuran. */
+function totalAsetNeraca() {
+  return kasTerkumpul() + pinjamanBeredar();
+}
+function totalKewajibanNeraca() {
+  return totalSimpananAnggota();
+}
+function ekuitasNeraca() {
+  return totalAsetNeraca() - totalKewajibanNeraca();
+}
 function anggotaMenunggak() { return state.anggota.filter(a => a.pinjaman && a.tunggakan >= 1).length; }
 function jatuhTempoBulanIni() {
   const now = new Date();
@@ -596,6 +616,7 @@ function openMemberDetail(id) {
 /* ===== LAINNYA ===== */
 const LAINNYA_ITEMS = [
   { key: "bukukas", icon: "📒", label: "Buku Kas", adminOnly: false },
+  { key: "neraca", icon: "⚖️", label: "Neraca Keuangan", adminOnly: false },
   { key: "timeline", icon: "🗓️", label: "Timeline Periode", adminOnly: false },
   { key: "auditlog", icon: "🧾", label: "Audit Log", adminOnly: false },
   { key: "peran", icon: "🔁", label: "Lihat Sebagai (Demo)", adminOnly: false },
@@ -629,6 +650,7 @@ function renderLainnya() {
     document.getElementById("lainnyaBackBtn").addEventListener("click", () => { lainnyaView = "menu"; renderLainnya(); });
     const content = document.getElementById("lainnyaSubContent");
     if (lainnyaView === "bukukas") renderBukuKas(content);
+    if (lainnyaView === "neraca") renderNeraca(content);
     if (lainnyaView === "timeline") renderTimeline(content);
     if (lainnyaView === "auditlog") renderAuditLog(content);
     if (lainnyaView === "peran") renderPeranSwitch(content);
@@ -659,6 +681,55 @@ function renderBukuKas(content) {
       </table>
     </div>
     <div class="form-note" style="margin-top:10px">Transaksi tidak pernah dihapus — hanya dapat dibatalkan (audit trail tetap tersimpan).</div>
+  `;
+}
+
+function renderNeraca(content) {
+  const kas = kasTerkumpul();
+  const piutang = pinjamanBeredar();
+  const aset = totalAsetNeraca();
+  const simpanan = totalSimpananAnggota();
+  const ekuitas = ekuitasNeraca();
+  const kewajibanEkuitas = simpanan + ekuitas;
+
+  content.innerHTML = `
+    <div class="neraca-card">
+      <div class="neraca-heading">ASET</div>
+      <div class="neraca-row">
+        <div class="neraca-label">Kas Koperasi</div>
+        <div class="neraca-value">${formatRupiah(kas)}</div>
+      </div>
+      <div class="neraca-row">
+        <div class="neraca-label">Piutang Pinjaman Anggota</div>
+        <div class="neraca-value">${formatRupiah(piutang)}</div>
+      </div>
+      <div class="neraca-row neraca-total">
+        <div class="neraca-label">Total Aset</div>
+        <div class="neraca-value">${formatRupiah(aset)}</div>
+      </div>
+    </div>
+
+    <div class="neraca-card" style="margin-top:12px">
+      <div class="neraca-heading">KEWAJIBAN &amp; EKUITAS</div>
+      <div class="neraca-row">
+        <div class="neraca-label">Simpanan Anggota</div>
+        <div class="neraca-value">${formatRupiah(simpanan)}</div>
+      </div>
+      <div class="neraca-row">
+        <div class="neraca-label">SHU / Laba Ditahan</div>
+        <div class="neraca-value">${formatRupiah(ekuitas)}</div>
+      </div>
+      <div class="neraca-row neraca-total">
+        <div class="neraca-label">Total Kewajiban &amp; Ekuitas</div>
+        <div class="neraca-value">${formatRupiah(kewajibanEkuitas)}</div>
+      </div>
+    </div>
+
+    <div class="neraca-balance-badge">✓ Neraca seimbang — Total Aset = Total Kewajiban &amp; Ekuitas</div>
+
+    <div class="form-note" style="margin-top:14px">
+      "SHU / Laba Ditahan" dihitung otomatis sebagai selisih Total Aset dikurangi Simpanan Anggota — bukan angka tebakan, jadi neraca ini selalu balance sesuai persamaan akuntansi dasar (Aset = Kewajiban + Ekuitas). Ini snapshot posisi keuangan saat ini; untuk riwayat transaksi kronologis lihat Buku Kas.
+    </div>
   `;
 }
 
