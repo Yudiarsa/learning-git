@@ -24,15 +24,15 @@ function nowIso() { return new Date().toISOString(); }
 function buildSeedState() {
   const anggotaSeed = [
     { nama: "Gede", hp: "081111000001", password: "admin123", role: "admin", tanggalBergabung: "2025-01-10", totalSimpanan: 1250000, pinjaman: null, tunggakan: 0 },
-    { nama: "Made", hp: "081111000002", password: "made123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 900000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 6, jatuhTempo: daysFromNow(4) }, tunggakan: 0 },
-    { nama: "Wayan", hp: "081111000003", password: "wayan123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 700000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 3, jatuhTempo: daysFromNow(-6) }, tunggakan: 2 },
+    { nama: "Made", hp: "081111000002", password: "made123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 900000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 6, jatuhTempoOffset: 4 }, tunggakan: 0 },
+    { nama: "Wayan", hp: "081111000003", password: "wayan123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 700000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 3, jatuhTempoOffset: -6 }, tunggakan: 2 },
     { nama: "Komang", hp: "081111000004", password: "komang123", role: "anggota", tanggalBergabung: "2025-02-05", totalSimpanan: 1100000, pinjaman: null, tunggakan: 0 },
-    { nama: "Ketut", hp: "081111000005", password: "ketut123", role: "anggota", tanggalBergabung: "2025-02-05", totalSimpanan: 500000, pinjaman: { jumlah: 500000, cicilanTerbayar: 1, jatuhTempo: daysFromNow(-20) }, tunggakan: 3 },
+    { nama: "Ketut", hp: "081111000005", password: "ketut123", role: "anggota", tanggalBergabung: "2025-02-05", totalSimpanan: 500000, pinjaman: { jumlah: 500000, cicilanTerbayar: 1, jatuhTempoOffset: -20 }, tunggakan: 3 },
     { nama: "Nyoman", hp: "081111000006", password: "nyoman123", role: "anggota", tanggalBergabung: "2025-02-20", totalSimpanan: 800000, pinjaman: null, tunggakan: 0 },
-    { nama: "Putu", hp: "081111000007", password: "putu123", role: "anggota", tanggalBergabung: "2025-03-01", totalSimpanan: 650000, pinjaman: { jumlah: 2000000, cicilanTerbayar: 8, jatuhTempo: daysFromNow(2) }, tunggakan: 0 },
+    { nama: "Putu", hp: "081111000007", password: "putu123", role: "anggota", tanggalBergabung: "2025-03-01", totalSimpanan: 650000, pinjaman: { jumlah: 2000000, cicilanTerbayar: 8, jatuhTempoOffset: 2 }, tunggakan: 0 },
     { nama: "Kadek", hp: "081111000008", password: "kadek123", role: "anggota", tanggalBergabung: "2025-03-15", totalSimpanan: 400000, pinjaman: null, tunggakan: 0 },
     { nama: "Wayan Sari", hp: "081111000009", password: "sari123", role: "anggota", tanggalBergabung: "2025-04-01", totalSimpanan: 950000, pinjaman: null, tunggakan: 0 },
-    { nama: "Made Ayu", hp: "081111000010", password: "ayu123", role: "anggota", tanggalBergabung: "2025-04-01", totalSimpanan: 350000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 5, jatuhTempo: daysFromNow(9) }, tunggakan: 1 }
+    { nama: "Made Ayu", hp: "081111000010", password: "ayu123", role: "anggota", tanggalBergabung: "2025-04-01", totalSimpanan: 350000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 5, jatuhTempoOffset: 9 }, tunggakan: 1 }
   ];
 
   const anggota = anggotaSeed.map((s, i) => ({
@@ -50,21 +50,42 @@ function buildSeedState() {
       totalCicilan: TOTAL_CICILAN,
       cicilanTerbayar: s.pinjaman.cicilanTerbayar,
       bungaPersenBulan: BUNGA_PERSEN,
-      jatuhTempo: s.pinjaman.jatuhTempo
+      jatuhTempo: daysFromNow(s.pinjaman.jatuhTempoOffset)
     } : null
   }));
 
-  const findId = (idx) => anggota[idx].id;
-
   const transaksi = [
-    { id: "T001", tanggal: daysFromNow(-1), anggotaId: findId(1), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T002", tanggal: daysFromNow(-22), anggotaId: findId(1), jenis: "pinjaman", jumlah: 1000000, arah: "keluar", keterangan: "Pencairan pinjaman" },
-    { id: "T003", tanggal: daysFromNow(-27), anggotaId: findId(1), jenis: "angsuran", jumlah: 101000, arah: "masuk", keterangan: "Angsuran ke-6" },
-    { id: "T004", tanggal: daysFromNow(-5), anggotaId: findId(2), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T005", tanggal: daysFromNow(-15), anggotaId: findId(6), jenis: "angsuran", jumlah: 220000, arah: "masuk", keterangan: "Angsuran ke-8" },
-    { id: "T006", tanggal: daysFromNow(-3), anggotaId: findId(3), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T007", tanggal: daysFromNow(-40), anggotaId: findId(4), jenis: "pinjaman", jumlah: 500000, arah: "keluar", keterangan: "Pencairan pinjaman" }
+    { id: "T001", tanggal: daysFromNow(-1), anggotaId: anggota[1].id, jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
+    { id: "T002", tanggal: daysFromNow(-5), anggotaId: anggota[2].id, jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
+    { id: "T003", tanggal: daysFromNow(-3), anggotaId: anggota[3].id, jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" }
   ];
+
+  /* Bangun pencairan + riwayat angsuran otomatis untuk tiap anggota
+     berpinjaman, konsisten dengan cicilanTerbayar & rumus angsuran
+     (bukan cuma satu-dua transaksi contoh) — supaya jumlah "X dari Y
+     kali" di UI selalu punya riwayat sebanyak X entri sungguhan,
+     bukan kelihatan bolong. Interval antar cicilan ~30 hari mundur
+     dari jatuh tempo berikutnya. */
+  anggotaSeed.forEach((s, i) => {
+    if (!s.pinjaman) return;
+    const a = anggota[i];
+    const { cicilanTerbayar, jatuhTempoOffset } = s.pinjaman;
+    const angsuran = angsuranPerBulan(a.pinjaman);
+    const disbursementOffset = jatuhTempoOffset - (cicilanTerbayar + 1) * 30;
+    transaksi.push({
+      id: "T" + String(transaksi.length + 1).padStart(3, "0"),
+      tanggal: daysFromNow(disbursementOffset), anggotaId: a.id, jenis: "pinjaman",
+      jumlah: s.pinjaman.jumlah, arah: "keluar", keterangan: "Pencairan pinjaman"
+    });
+    for (let k = 1; k <= cicilanTerbayar; k++) {
+      const offset = jatuhTempoOffset - (cicilanTerbayar - k + 1) * 30;
+      transaksi.push({
+        id: "T" + String(transaksi.length + 1).padStart(3, "0"),
+        tanggal: daysFromNow(offset), anggotaId: a.id, jenis: "angsuran",
+        jumlah: angsuran, arah: "masuk", keterangan: `Angsuran ke-${k}`
+      });
+    }
+  });
 
   const pengumuman = [
     { id: "P1", teks: "Pertemuan Bulanan 10 September di Balai Banjar", tanggal: daysFromNow(3) },
@@ -82,8 +103,8 @@ function buildSeedState() {
     pengajuanPinjaman: [],
     buktiPembayaran: [],
     auditLog: [
-      { id: "L1", actor: "Gede", aksi: "Menyetujui pinjaman Made sebesar Rp1.000.000", waktu: new Date(Date.now() - 22 * 86400000).toISOString() },
-      { id: "L2", actor: "Gede", aksi: "Menyetujui pinjaman Wayan sebesar Rp1.000.000", waktu: new Date(Date.now() - 60 * 86400000).toISOString() }
+      { id: "L1", actor: "Gede", aksi: "Menyetujui pinjaman Made sebesar Rp1.000.000", waktu: new Date(Date.now() - 206 * 86400000).toISOString() },
+      { id: "L2", actor: "Gede", aksi: "Menyetujui pinjaman Wayan sebesar Rp1.000.000", waktu: new Date(Date.now() - 126 * 86400000).toISOString() }
     ]
   };
 }
@@ -188,6 +209,20 @@ function jatuhTempoBulanIni() {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 }
+/* Riwayat angsuran untuk pinjaman yang SEDANG aktif milik satu anggota.
+   Transaksi tidak menyimpan id pinjaman, tapi karena anggota hanya boleh
+   punya satu pinjaman aktif sekaligus (pinjaman baru hanya bisa diajukan
+   setelah pinjaman lama lunas), N transaksi "angsuran" terakhir milik
+   anggota ini (N = cicilanTerbayar pinjaman aktif) pasti pembayaran
+   untuk pinjaman yang sedang berjalan. */
+function riwayatAngsuranAktif(a) {
+  if (!a.pinjaman || a.pinjaman.cicilanTerbayar === 0) return [];
+  const semua = state.transaksi
+    .filter(t => t.anggotaId === a.id && t.jenis === "angsuran")
+    .sort((x, y) => new Date(x.tanggal) - new Date(y.tanggal));
+  return semua.slice(-a.pinjaman.cicilanTerbayar);
+}
+
 function pengingatList() {
   const now = new Date();
   return state.anggota
@@ -347,6 +382,18 @@ function renderPinjaman() {
   if (u.pinjaman) {
     const p = u.pinjaman;
     const pct = Math.round((p.cicilanTerbayar / p.totalCicilan) * 100);
+    const riwayat = riwayatAngsuranAktif(u);
+    const riwayatHtml = riwayat.length === 0
+      ? `<div class="activity-empty">Belum ada pembayaran untuk pinjaman ini.</div>`
+      : `<div class="activity-list">${riwayat.map((t, i) => `
+        <div class="activity-item">
+          <div class="activity-icon in">📄</div>
+          <div class="activity-main">
+            <div class="activity-title">Angsuran ke-${i + 1}</div>
+            <div class="activity-sub">${formatDate(t.tanggal)}</div>
+          </div>
+          <div class="activity-amount in">+${formatRupiah(t.jumlah)}</div>
+        </div>`).join("")}</div>`;
     block.innerHTML = `
       <div class="section-heading">Pinjaman Aktif</div>
       <div class="chart-card">
@@ -359,11 +406,51 @@ function renderPinjaman() {
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
         <div class="progress-label">${pct}% · ${p.cicilanTerbayar}/${p.totalCicilan} pembayaran</div>
         <div class="progress-label" style="margin-top:8px">Jatuh tempo: ${formatDate(p.jatuhTempo)} · Angsuran/bulan: ${formatRupiah(angsuranPerBulan(p))}</div>
-      </div>`;
+      </div>
+      <div class="md-section-title">Riwayat Pembayaran (${p.cicilanTerbayar} dari ${p.totalCicilan} kali)</div>
+      ${riwayatHtml}`;
   } else {
     block.innerHTML = `
       <div class="section-heading">Pinjaman Aktif</div>
       <div class="empty-state" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius)">Anda tidak memiliki pinjaman aktif.</div>`;
+  }
+
+  const statusBlock = document.getElementById("statusPinjamanBlock");
+  statusBlock.hidden = !isAdmin();
+  if (isAdmin()) {
+    const now = new Date();
+    const dengan = state.anggota
+      .filter(a => a.pinjaman)
+      .map(a => {
+        const diffDays = Math.ceil((new Date(a.pinjaman.jatuhTempo) - now) / 86400000);
+        return { a, diffDays, st: statusPinjaman(a) };
+      })
+      .sort((x, y) => {
+        if (x.a.tunggakan !== y.a.tunggakan) return y.a.tunggakan - x.a.tunggakan;
+        return x.diffDays - y.diffDays;
+      });
+    const listEl = document.getElementById("statusPinjamanList");
+    if (dengan.length === 0) {
+      listEl.innerHTML = `<div class="activity-empty">Tidak ada anggota dengan pinjaman aktif.</div>`;
+    } else {
+      listEl.innerHTML = dengan.map(x => {
+        const tempoLabel = x.diffDays < 0
+          ? `Terlambat ${Math.abs(x.diffDays)} hari`
+          : x.diffDays === 0 ? "Jatuh tempo hari ini" : `Jatuh tempo ${x.diffDays} hari lagi`;
+        return `
+        <div class="activity-item" data-member="${x.a.id}" style="cursor:pointer">
+          <div class="activity-icon ${x.diffDays < 0 ? "out" : "in"}">${x.diffDays < 0 ? "⚠️" : "📄"}</div>
+          <div class="activity-main">
+            <div class="activity-title">${x.a.nama}</div>
+            <div class="activity-sub">${tempoLabel} · ${formatDate(x.a.pinjaman.jatuhTempo)} · sisa ${formatRupiah(sisaHutang(x.a.pinjaman))}</div>
+          </div>
+          <div class="status-pill ${x.st.cls}">${x.st.label}</div>
+        </div>`;
+      }).join("");
+      listEl.querySelectorAll("[data-member]").forEach(el => {
+        el.addEventListener("click", () => openMemberDetail(el.dataset.member));
+      });
+    }
   }
 
   const approvalBlock = document.getElementById("approvalPinjamanBlock");
@@ -591,7 +678,24 @@ function openMemberDetail(id) {
       <div class="md-stat"><div class="md-stat-label">Sisa Pinjaman</div><div class="md-stat-value">${a.pinjaman ? formatRupiah(sisaHutang(a.pinjaman)) : "-"}</div></div>
     </div>
 
-    <div class="md-section-title">Riwayat Transaksi</div>
+    ${a.pinjaman ? `
+    <div class="md-section-title">Riwayat Pembayaran (${a.pinjaman.cicilanTerbayar} dari ${a.pinjaman.totalCicilan} kali) · Jatuh tempo ${formatDate(a.pinjaman.jatuhTempo)}</div>
+    <div class="activity-list">${
+      riwayatAngsuranAktif(a).length === 0
+        ? `<div class="activity-empty">Belum ada pembayaran untuk pinjaman ini.</div>`
+        : riwayatAngsuranAktif(a).map((t, i) => `
+          <div class="activity-item">
+            <div class="activity-icon in">📄</div>
+            <div class="activity-main">
+              <div class="activity-title">Angsuran ke-${i + 1}</div>
+              <div class="activity-sub">${formatDate(t.tanggal)}</div>
+            </div>
+            <div class="activity-amount in">+${formatRupiah(t.jumlah)}</div>
+          </div>`).join("")
+    }</div>
+    ` : ""}
+
+    <div class="md-section-title">Riwayat Transaksi (Semua)</div>
     <div class="activity-list">${riwayatHtml}</div>
 
     ${isAdmin() ? `

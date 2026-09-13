@@ -42,14 +42,19 @@ Keamanan di bawah untuk alasannya.
   (total anggota, kas terkumpul, pinjaman beredar, anggota menunggak,
   jatuh tempo bulan ini), dan pengumuman.
 - **Pinjaman** — kartu pinjaman aktif (jumlah, bunga, sisa cicilan,
-  sisa hutang, progress bar, jatuh tempo), tombol Ajukan Pinjaman &
-  Upload Bukti Bayar; admin melihat & memutuskan pengajuan yang menunggu.
+  sisa hutang, progress bar, jatuh tempo) + **riwayat pembayaran bernomor
+  urut** (angsuran ke berapa, tanggal, jumlah) untuk anggota melihat
+  pinjamannya sendiri; tombol Ajukan Pinjaman & Upload Bukti Bayar. Admin
+  melihat daftar **Menunggak & Jatuh Tempo** (semua anggota berpinjaman,
+  diurutkan dari yang paling perlu perhatian) dan memutuskan pengajuan
+  yang menunggu.
 - **Pembayaran** — upload bukti pembayaran, status verifikasi, histori
   transaksi (filter Semua/Setoran/Pinjaman/Angsuran); admin memverifikasi
   bukti yang masuk.
 - **Anggota** — transparansi publik: status tiap anggota (Lancar/
   Menunggak Nx/Perlu Evaluasi Keanggotaan) dengan kode warna, klik untuk
-  detail (skor kepatuhan, riwayat transaksi); admin bisa tambah/nonaktifkan
+  detail (skor kepatuhan, riwayat pembayaran bernomor urut + tanggal jatuh
+  tempo, riwayat transaksi lengkap); admin bisa tambah/nonaktifkan
   anggota.
 - **Lainnya** — Buku Kas (ledger masuk/keluar, transaksi hanya bisa
   dibatalkan, tidak dihapus), Neraca Keuangan (snapshot posisi keuangan:
