@@ -745,6 +745,7 @@ const LAINNYA_ITEMS = [
   { key: "neraca", icon: "⚖️", label: "Neraca Keuangan", adminOnly: false },
   { key: "timeline", icon: "🗓️", label: "Timeline Periode", adminOnly: false },
   { key: "auditlog", icon: "🧾", label: "Audit Log", adminOnly: false },
+  { key: "unduhLaporan", icon: "⬇️", label: "Unduh Laporan Keuangan (PDF)", adminOnly: false },
   { key: "peran", icon: "🔁", label: "Lihat Sebagai (Demo)", adminOnly: false },
   { key: "tentang", icon: "ℹ️", label: "Tentang & Keterbatasan", adminOnly: false },
   { key: "keluar", icon: "🚪", label: "Keluar", adminOnly: false, danger: true }
@@ -765,6 +766,7 @@ function renderLainnya() {
     menuEl.querySelectorAll(".menu-item").forEach(el => {
       el.addEventListener("click", () => {
         if (el.dataset.key === "keluar") { logout(); return; }
+        if (el.dataset.key === "unduhLaporan") { generateLaporanKeuanganPDF(); return; }
         lainnyaView = el.dataset.key;
         renderLainnya();
       });
@@ -782,6 +784,181 @@ function renderLainnya() {
     if (lainnyaView === "peran") renderPeranSwitch(content);
     if (lainnyaView === "tentang") renderTentang(content);
   }
+}
+
+/* ===== Unduh Laporan Keuangan (PDF) =====
+   jsPDF + autoTable di-vendor lokal (assets/vendor/), bukan CDN, supaya
+   fitur ini tetap jalan tanpa internet — konsisten dengan arsitektur
+   client-only aplikasi ini. Transaksi yang dibatalkan (t.dibatalkan)
+   sengaja dikecualikan dari Buku Kas & saldo berjalan di laporan, sama
+   seperti seharusnya diperlakukan kas sungguhan. */
+function generateLaporanKeuanganPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 14;
+  let y = 16;
+
+  const u = currentUser();
+  const TEAL = [15, 118, 110];
+
+  const ensureSpace = (needed) => {
+    if (y + needed > pageHeight - 16) { doc.addPage(); y = 16; }
+  };
+  const sectionTitle = (text) => {
+    doc.setFontSize(11);
+    doc.setFont(undefined, "bold");
+    doc.text(text, marginX, y);
+    doc.setFont(undefined, "normal");
+    y += 2;
+  };
+
+  doc.setFontSize(15);
+  doc.setFont(undefined, "bold");
+  doc.text("SEKE MESARI", marginX, y);
+  doc.setFontSize(11);
+  doc.setFont(undefined, "normal");
+  y += 6;
+  doc.text("Laporan Keuangan — Arisan & Pinjaman Keluarga", marginX, y);
+  y += 6;
+  doc.setFontSize(8.5);
+  doc.setTextColor(90);
+  doc.text(
+    `Periode ke-${state.periodeSekarang} dari ${state.totalPeriode}  ·  Dicetak: ${formatDateTime(nowIso())}  ·  Oleh: ${u ? u.nama + " (" + (u.role === "admin" ? "Admin/Bendahara" : "Anggota") + ")" : "-"}`,
+    marginX, y
+  );
+  doc.setTextColor(0);
+  y += 7;
+
+  /* 1. Ringkasan Neraca */
+  const kas = kasTerkumpul();
+  const piutang = pinjamanBeredar();
+  const aset = totalAsetNeraca();
+  const simpanan = totalSimpananAnggota();
+  const ekuitas = ekuitasNeraca();
+  const seimbang = Math.round(aset) === Math.round(simpanan + ekuitas);
+
+  sectionTitle("1. Ringkasan Neraca Keuangan");
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["Pos", "Nilai"]],
+    body: [
+      ["Kas Koperasi", formatRupiah(kas)],
+      ["Piutang Pinjaman Anggota", formatRupiah(piutang)],
+      ["Total Aset", formatRupiah(aset)],
+      ["Simpanan Anggota (Kewajiban)", formatRupiah(simpanan)],
+      ["SHU / Laba Ditahan (Ekuitas)", formatRupiah(ekuitas)],
+      ["Total Kewajiban + Ekuitas", formatRupiah(simpanan + ekuitas)]
+    ],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: TEAL },
+    didParseCell: (data) => {
+      if (data.section === "body" && (data.row.index === 2 || data.row.index === 5)) {
+        data.cell.styles.fontStyle = "bold";
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY + 4;
+  doc.setFontSize(8);
+  doc.setFont(undefined, "italic");
+  doc.setTextColor(seimbang ? 90 : 200, seimbang ? 90 : 40, seimbang ? 90 : 40);
+  doc.text(
+    seimbang ? "Neraca seimbang (Total Aset = Total Kewajiban + Ekuitas)." : "PERINGATAN: Neraca TIDAK seimbang — periksa data transaksi.",
+    marginX, y
+  );
+  doc.setTextColor(0);
+  doc.setFont(undefined, "normal");
+  y += 7;
+
+  /* 2. Rincian Piutang Pinjaman per Anggota */
+  ensureSpace(30);
+  const peminjam = state.anggota.filter(a => a.pinjaman);
+  sectionTitle("2. Rincian Piutang Pinjaman per Anggota");
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["No", "Nama", "Pinjaman Awal", "Cicilan", "Sisa Hutang", "Jatuh Tempo", "Status"]],
+    body: peminjam.length
+      ? peminjam.map((a, i) => [
+          i + 1, a.nama, formatRupiah(a.pinjaman.jumlah),
+          `${a.pinjaman.cicilanTerbayar}/${a.pinjaman.totalCicilan}`,
+          formatRupiah(sisaHutang(a.pinjaman)), formatDate(a.pinjaman.jatuhTempo),
+          statusPinjaman(a).label
+        ])
+      : [["-", "Tidak ada anggota dengan pinjaman aktif.", "", "", "", "", ""]],
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: TEAL }
+  });
+  y = doc.lastAutoTable.finalY + 7;
+
+  /* 3. Rincian Simpanan & Status Keanggotaan */
+  ensureSpace(30);
+  sectionTitle("3. Rincian Simpanan & Status Keanggotaan");
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["No", "Nama", "Total Simpanan", "Status", "Skor Kepatuhan"]],
+    body: state.anggota.map((a, i) => [i + 1, a.nama, formatRupiah(a.totalSimpanan), statusPinjaman(a).label, skorKepatuhan(a)]),
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: TEAL }
+  });
+  y = doc.lastAutoTable.finalY + 7;
+
+  /* 4. Buku Kas — riwayat transaksi lengkap dengan saldo berjalan */
+  ensureSpace(30);
+  sectionTitle("4. Buku Kas — Riwayat Transaksi Lengkap");
+  const jenisLabel = { setoran: "Setoran", pinjaman: "Pencairan Pinjaman", angsuran: "Angsuran" };
+  const aktif = state.transaksi.filter(t => !t.dibatalkan).sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+  let saldo = state.kasTerkumpulAwal;
+  const bukuKasRows = aktif.map((t, i) => {
+    saldo += t.arah === "masuk" ? t.jumlah : -t.jumlah;
+    return [
+      i + 1, formatDate(t.tanggal), getAnggota(t.anggotaId)?.nama || "-", jenisLabel[t.jenis] || t.jenis,
+      t.arah === "masuk" ? formatRupiah(t.jumlah) : "-",
+      t.arah === "keluar" ? formatRupiah(t.jumlah) : "-",
+      formatRupiah(saldo)
+    ];
+  });
+  const dibatalkanCount = state.transaksi.length - aktif.length;
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["No", "Tanggal", "Anggota", "Jenis", "Masuk", "Keluar", "Saldo"]],
+    body: bukuKasRows,
+    foot: [
+      ["", "", "", "Saldo Kas Awal", "", "", formatRupiah(state.kasTerkumpulAwal)],
+      ["", "", "", "Saldo Kas Akhir", "", "", formatRupiah(saldo)]
+    ],
+    styles: { fontSize: 7.5 },
+    headStyles: { fillColor: TEAL },
+    footStyles: { fontStyle: "bold", fillColor: [240, 240, 240], textColor: 20 }
+  });
+  y = doc.lastAutoTable.finalY + 4;
+  if (dibatalkanCount > 0) {
+    ensureSpace(6);
+    doc.setFontSize(8);
+    doc.text(`Catatan: ${dibatalkanCount} transaksi dibatalkan tidak dihitung di atas, tetap tercatat di Audit Log.`, marginX, y);
+    y += 5;
+  }
+
+  /* Footer tiap halaman */
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7);
+    doc.setTextColor(120);
+    doc.text("Laporan dibuat otomatis oleh aplikasi SEKE MESARI dari data lokal perangkat — bukan dokumen resmi bermaterai.", marginX, pageHeight - 10);
+    doc.text(`Halaman ${p} dari ${pageCount}`, pageWidth - marginX, pageHeight - 10, { align: "right" });
+    doc.setTextColor(0);
+  }
+
+  const filename = `Laporan-Keuangan-SEKE-MESARI-Periode${state.periodeSekarang}-${todayIso()}.pdf`;
+  doc.save(filename);
+  logAudit(`Mengunduh Laporan Keuangan (PDF) periode ke-${state.periodeSekarang}`);
+  saveState(state);
+  showToast("Laporan keuangan sedang diunduh...");
 }
 
 function renderBukuKas(content) {

@@ -58,9 +58,39 @@ Keamanan di bawah untuk alasannya.
   anggota.
 - **Lainnya** — Buku Kas (ledger masuk/keluar, transaksi hanya bisa
   dibatalkan, tidak dihapus), Neraca Keuangan (snapshot posisi keuangan:
-  Aset vs Kewajiban & Ekuitas, format dua kolom), Timeline Periode (1–10),
-  Audit Log, "Lihat Sebagai" (demo ganti peran admin/anggota tanpa
-  logout), Tentang & Keterbatasan, Keluar.
+  Aset vs Kewajiban & Ekuitas, format dua kolom), **Unduh Laporan
+  Keuangan (PDF)** — laporan detail siap cetak/arsip (lihat bagian
+  tersendiri di bawah), Timeline Periode (1–10), Audit Log, "Lihat
+  Sebagai" (demo ganti peran admin/anggota tanpa logout), Tentang &
+  Keterbatasan, Keluar.
+- Dashboard **Home**: 3 stat card (Pinjaman Beredar, Anggota Menunggak,
+  Jatuh Tempo Bulan Ini) bisa diklik admin untuk melihat daftar anggota
+  terkait langsung, tanpa harus pindah tab.
+
+## Laporan Keuangan (PDF)
+
+Menu Lainnya → **Unduh Laporan Keuangan (PDF)** menghasilkan satu berkas
+PDF berisi:
+
+1. Ringkasan Neraca Keuangan (Aset, Kewajiban, Ekuitas) + status
+   seimbang/tidak.
+2. Rincian piutang pinjaman per anggota (pinjaman awal, cicilan, sisa
+   hutang, jatuh tempo, status).
+3. Rincian simpanan & status keanggotaan per anggota (termasuk skor
+   kepatuhan).
+4. Buku Kas — riwayat transaksi lengkap **dengan saldo berjalan**
+   (running balance), urut tanggal, transaksi yang dibatalkan
+   dikecualikan dari perhitungan (sesuai audit trail).
+
+Setiap laporan mencatat kapan dan oleh siapa laporan itu diunduh (masuk
+ke Audit Log), serta mencantumkan disclaimer bahwa ini dokumen yang
+dihasilkan otomatis dari data lokal aplikasi, bukan dokumen resmi
+bermaterai.
+
+Library pembuat PDF (`jsPDF` + `jspdf-autotable`) **di-bundle lokal** di
+`assets/vendor/`, bukan dimuat dari CDN — supaya fitur ini tetap
+berfungsi tanpa koneksi internet, konsisten dengan prinsip aplikasi ini
+yang berjalan sepenuhnya di browser.
 
 ## Aturan bisnis yang diterapkan
 
@@ -81,9 +111,10 @@ Keamanan di bawah untuk alasannya.
 ## Struktur Berkas
 
 ```
-index.html        markup + 5 tab panel + modal (pinjaman, bukti, anggota) + login screen
-assets/style.css  tema, layout mobile-first, dark mode
-assets/app.js     data contoh, state, autentikasi (simulasi), rendering, logika bisnis
+index.html          markup + 5 tab panel + modal (pinjaman, bukti, anggota) + login screen
+assets/style.css    tema, layout mobile-first, dark mode
+assets/app.js       data contoh, state, autentikasi (simulasi), rendering, logika bisnis
+assets/vendor/      jsPDF + jspdf-autotable (di-bundle lokal untuk fitur Unduh Laporan)
 ```
 
 ## Keamanan (batasan yang disengaja, bukan sekadar "belum sempat")
