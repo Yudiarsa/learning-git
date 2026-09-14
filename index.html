@@ -80,15 +80,15 @@
           <div class="stat-label">Kas Terkumpul</div>
           <div class="stat-value" id="statKas">Rp0</div>
         </div>
-        <div class="stat-card blue">
+        <div class="stat-card blue" id="cardPinjamanBeredar">
           <div class="stat-label">Pinjaman Beredar</div>
           <div class="stat-value" id="statPinjamanBeredar">Rp0</div>
         </div>
-        <div class="stat-card red">
+        <div class="stat-card red" id="cardMenunggak">
           <div class="stat-label">Anggota Menunggak</div>
           <div class="stat-value" id="statMenunggak">0</div>
         </div>
-        <div class="stat-card amber span2">
+        <div class="stat-card amber span2" id="cardJatuhTempo">
           <div class="stat-label">Jatuh Tempo Bulan Ini</div>
           <div class="stat-value" id="statJatuhTempo">0 anggota</div>
         </div>
@@ -268,6 +268,17 @@
       <input type="tel" id="anggotaHp" required>
       <button type="submit" class="btn-primary">Simpan</button>
     </form>
+  </div>
+</div>
+
+<!-- Modal: Detail Ringkasan (drilldown dari stat card Home) -->
+<div class="modal-overlay" id="statDrilldownOverlay" hidden>
+  <div class="modal modal-large">
+    <div class="modal-header">
+      <h3 id="statDrilldownTitle">Detail</h3>
+      <button class="icon-btn" id="statDrilldownCloseBtn">✕</button>
+    </div>
+    <div id="statDrilldownList" class="activity-list"></div>
   </div>
 </div>
 

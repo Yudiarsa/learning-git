@@ -223,6 +223,53 @@ function riwayatAngsuranAktif(a) {
   return semua.slice(-a.pinjaman.cicilanTerbayar);
 }
 
+/* Baris "nama - status jatuh tempo - sisa hutang" dipakai bersama oleh
+   list "Menunggak & Jatuh Tempo" (tab Pinjaman) dan modal drilldown dari
+   stat card Home, supaya tampilannya konsisten dan tidak dobel logika. */
+function buildPinjamanStatusRows(anggotaList) {
+  const now = new Date();
+  return anggotaList
+    .map(a => {
+      const diffDays = Math.ceil((new Date(a.pinjaman.jatuhTempo) - now) / 86400000);
+      return { a, diffDays, st: statusPinjaman(a) };
+    })
+    .sort((x, y) => {
+      if (x.a.tunggakan !== y.a.tunggakan) return y.a.tunggakan - x.a.tunggakan;
+      return x.diffDays - y.diffDays;
+    });
+}
+function renderPinjamanStatusList(containerEl, rows, emptyText) {
+  if (rows.length === 0) {
+    containerEl.innerHTML = `<div class="activity-empty">${emptyText}</div>`;
+    return;
+  }
+  containerEl.innerHTML = rows.map(x => {
+    const tempoLabel = x.diffDays < 0
+      ? `Terlambat ${Math.abs(x.diffDays)} hari`
+      : x.diffDays === 0 ? "Jatuh tempo hari ini" : `Jatuh tempo ${x.diffDays} hari lagi`;
+    return `
+    <div class="activity-item" data-member="${x.a.id}" style="cursor:pointer">
+      <div class="activity-icon ${x.diffDays < 0 ? "out" : "in"}">${x.diffDays < 0 ? "⚠️" : "📄"}</div>
+      <div class="activity-main">
+        <div class="activity-title">${x.a.nama}</div>
+        <div class="activity-sub">${tempoLabel} · ${formatDate(x.a.pinjaman.jatuhTempo)} · sisa ${formatRupiah(sisaHutang(x.a.pinjaman))}</div>
+      </div>
+      <div class="status-pill ${x.st.cls}">${x.st.label}</div>
+    </div>`;
+  }).join("");
+  containerEl.querySelectorAll("[data-member]").forEach(el => {
+    el.addEventListener("click", () => {
+      document.getElementById("statDrilldownOverlay").hidden = true;
+      openMemberDetail(el.dataset.member);
+    });
+  });
+}
+function openStatDrilldown(title, anggotaList, emptyText) {
+  document.getElementById("statDrilldownTitle").textContent = title;
+  renderPinjamanStatusList(document.getElementById("statDrilldownList"), buildPinjamanStatusRows(anggotaList), emptyText);
+  document.getElementById("statDrilldownOverlay").hidden = false;
+}
+
 function pengingatList() {
   const now = new Date();
   return state.anggota
@@ -305,6 +352,9 @@ function renderHome() {
   document.getElementById("statJatuhTempo").textContent = jatuhTempoBulanIni() + " anggota";
 
   document.getElementById("addPengumumanBtn").hidden = !isAdmin();
+  ["cardPinjamanBeredar", "cardMenunggak", "cardJatuhTempo"].forEach(id => {
+    document.getElementById(id).classList.toggle("clickable", isAdmin());
+  });
 
   const list = document.getElementById("pengumumanList");
   if (state.pengumuman.length === 0) {
@@ -418,39 +468,11 @@ function renderPinjaman() {
   const statusBlock = document.getElementById("statusPinjamanBlock");
   statusBlock.hidden = !isAdmin();
   if (isAdmin()) {
-    const now = new Date();
-    const dengan = state.anggota
-      .filter(a => a.pinjaman)
-      .map(a => {
-        const diffDays = Math.ceil((new Date(a.pinjaman.jatuhTempo) - now) / 86400000);
-        return { a, diffDays, st: statusPinjaman(a) };
-      })
-      .sort((x, y) => {
-        if (x.a.tunggakan !== y.a.tunggakan) return y.a.tunggakan - x.a.tunggakan;
-        return x.diffDays - y.diffDays;
-      });
-    const listEl = document.getElementById("statusPinjamanList");
-    if (dengan.length === 0) {
-      listEl.innerHTML = `<div class="activity-empty">Tidak ada anggota dengan pinjaman aktif.</div>`;
-    } else {
-      listEl.innerHTML = dengan.map(x => {
-        const tempoLabel = x.diffDays < 0
-          ? `Terlambat ${Math.abs(x.diffDays)} hari`
-          : x.diffDays === 0 ? "Jatuh tempo hari ini" : `Jatuh tempo ${x.diffDays} hari lagi`;
-        return `
-        <div class="activity-item" data-member="${x.a.id}" style="cursor:pointer">
-          <div class="activity-icon ${x.diffDays < 0 ? "out" : "in"}">${x.diffDays < 0 ? "⚠️" : "📄"}</div>
-          <div class="activity-main">
-            <div class="activity-title">${x.a.nama}</div>
-            <div class="activity-sub">${tempoLabel} · ${formatDate(x.a.pinjaman.jatuhTempo)} · sisa ${formatRupiah(sisaHutang(x.a.pinjaman))}</div>
-          </div>
-          <div class="status-pill ${x.st.cls}">${x.st.label}</div>
-        </div>`;
-      }).join("");
-      listEl.querySelectorAll("[data-member]").forEach(el => {
-        el.addEventListener("click", () => openMemberDetail(el.dataset.member));
-      });
-    }
+    renderPinjamanStatusList(
+      document.getElementById("statusPinjamanList"),
+      buildPinjamanStatusRows(state.anggota.filter(a => a.pinjaman)),
+      "Tidak ada anggota dengan pinjaman aktif."
+    );
   }
 
   const approvalBlock = document.getElementById("approvalPinjamanBlock");
@@ -999,6 +1021,34 @@ function initAnggotaModal() {
   });
 }
 
+/* ===== Stat card drilldown (Home, admin-only) ===== */
+function initStatDrilldown() {
+  document.getElementById("statDrilldownCloseBtn").addEventListener("click", () => {
+    document.getElementById("statDrilldownOverlay").hidden = true;
+  });
+  document.getElementById("statDrilldownOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "statDrilldownOverlay") document.getElementById("statDrilldownOverlay").hidden = true;
+  });
+  document.getElementById("cardPinjamanBeredar").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    openStatDrilldown("Pinjaman Beredar — Semua Peminjam", state.anggota.filter(a => a.pinjaman), "Tidak ada anggota dengan pinjaman aktif.");
+  });
+  document.getElementById("cardMenunggak").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    openStatDrilldown("Anggota Menunggak", state.anggota.filter(a => a.pinjaman && a.tunggakan >= 1), "Tidak ada anggota yang menunggak.");
+  });
+  document.getElementById("cardJatuhTempo").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    const now = new Date();
+    const list = state.anggota.filter(a => {
+      if (!a.pinjaman) return false;
+      const d = new Date(a.pinjaman.jatuhTempo);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    openStatDrilldown("Jatuh Tempo Bulan Ini", list, "Tidak ada anggota jatuh tempo bulan ini.");
+  });
+}
+
 /* ===== Add Pengumuman =====
    Pakai modal sendiri, bukan window.prompt() — di dalam iframe (artifact)
    maupun sebagian in-app browser mobile, prompt()/alert()/confirm() bisa
@@ -1064,6 +1114,7 @@ function init() {
   initBuktiModal();
   initAnggotaModal();
   initPengumumanModal();
+  initStatDrilldown();
 
   document.querySelectorAll(".nav-item").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
 

@@ -298,6 +298,8 @@ button, input, select { font-family: inherit; }
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
 }
+.stat-card.clickable { cursor: pointer; transition: transform 0.1s ease; }
+.stat-card.clickable:active { transform: scale(0.97); }
 .stat-icon { font-size: 18px; margin-bottom: 6px; }
 .stat-label { font-size: 12px; color: var(--text-muted); }
 .stat-value { font-size: 17px; font-weight: 700; margin-top: 2px; }
