@@ -602,13 +602,13 @@ tr.dibatalkan td { text-decoration: line-through; opacity: 0.5; }
   margin-bottom: 16px;
 }
 .modal-header h3 { margin: 0; font-size: 16px; }
-#pinjamanForm label, #buktiForm label, #anggotaForm label {
+#pinjamanForm label, #buktiForm label, #anggotaForm label, #pengumumanForm label {
   display: block;
   font-size: 12px;
   color: var(--text-muted);
   margin: 12px 0 6px;
 }
-#pinjamanForm input, #buktiForm input, #anggotaForm input {
+#pinjamanForm input, #buktiForm input, #anggotaForm input, #pengumumanForm textarea {
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
@@ -616,6 +616,8 @@ tr.dibatalkan td { text-decoration: line-through; opacity: 0.5; }
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
 }
 .form-note { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
 .bukti-preview {

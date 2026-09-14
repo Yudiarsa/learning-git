@@ -271,6 +271,21 @@
   </div>
 </div>
 
+<!-- Modal: Tambah Pengumuman -->
+<div class="modal-overlay" id="pengumumanModalOverlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Tambah Pengumuman</h3>
+      <button class="icon-btn" id="pengumumanModalCloseBtn">✕</button>
+    </div>
+    <form id="pengumumanForm">
+      <label>Isi Pengumuman</label>
+      <textarea id="pengumumanTeks" rows="4" placeholder="Contoh: Pertemuan bulanan 10 Oktober di Balai Banjar" required></textarea>
+      <button type="submit" class="btn-primary">Simpan</button>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast" hidden></div>
 
 <script src="assets/app.js"></script>

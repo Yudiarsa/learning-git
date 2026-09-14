@@ -999,14 +999,30 @@ function initAnggotaModal() {
   });
 }
 
-/* ===== Add Pengumuman ===== */
+/* ===== Add Pengumuman =====
+   Pakai modal sendiri, bukan window.prompt() — di dalam iframe (artifact)
+   maupun sebagian in-app browser mobile, prompt()/alert()/confirm() bisa
+   diblokir sandbox dan langsung return null tanpa error terlihat. */
 function initPengumumanModal() {
   document.getElementById("addPengumumanBtn").addEventListener("click", () => {
-    const teks = prompt("Isi pengumuman:");
-    if (!teks || !teks.trim()) return;
-    state.pengumuman.push({ id: "P" + (state.pengumuman.length + 1), teks: teks.trim(), tanggal: todayIso() });
-    logAudit(`Menambahkan pengumuman: ${teks.trim()}`);
+    document.getElementById("pengumumanForm").reset();
+    document.getElementById("pengumumanModalOverlay").hidden = false;
+  });
+  document.getElementById("pengumumanModalCloseBtn").addEventListener("click", () => {
+    document.getElementById("pengumumanModalOverlay").hidden = true;
+  });
+  document.getElementById("pengumumanModalOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "pengumumanModalOverlay") document.getElementById("pengumumanModalOverlay").hidden = true;
+  });
+  document.getElementById("pengumumanForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const teks = document.getElementById("pengumumanTeks").value.trim();
+    if (!teks) return;
+    state.pengumuman.push({ id: "P" + (state.pengumuman.length + 1), teks, tanggal: todayIso() });
+    logAudit(`Menambahkan pengumuman: ${teks}`);
     saveState(state);
+    document.getElementById("pengumumanModalOverlay").hidden = true;
+    showToast("Pengumuman ditambahkan.");
     renderHome();
   });
 }
