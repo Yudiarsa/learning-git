@@ -24,15 +24,15 @@ function nowIso() { return new Date().toISOString(); }
 function buildSeedState() {
   const anggotaSeed = [
     { nama: "Gede", hp: "081111000001", password: "admin123", role: "admin", tanggalBergabung: "2025-01-10", totalSimpanan: 1250000, pinjaman: null, tunggakan: 0 },
-    { nama: "Made", hp: "081111000002", password: "made123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 900000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 6, jatuhTempo: daysFromNow(4) }, tunggakan: 0 },
-    { nama: "Wayan", hp: "081111000003", password: "wayan123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 700000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 3, jatuhTempo: daysFromNow(-6) }, tunggakan: 2 },
+    { nama: "Made", hp: "081111000002", password: "made123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 900000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 6, jatuhTempoOffset: 4 }, tunggakan: 0 },
+    { nama: "Wayan", hp: "081111000003", password: "wayan123", role: "anggota", tanggalBergabung: "2025-01-10", totalSimpanan: 700000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 3, jatuhTempoOffset: -6 }, tunggakan: 2 },
     { nama: "Komang", hp: "081111000004", password: "komang123", role: "anggota", tanggalBergabung: "2025-02-05", totalSimpanan: 1100000, pinjaman: null, tunggakan: 0 },
-    { nama: "Ketut", hp: "081111000005", password: "ketut123", role: "anggota", tanggalBergabung: "2025-02-05", totalSimpanan: 500000, pinjaman: { jumlah: 500000, cicilanTerbayar: 1, jatuhTempo: daysFromNow(-20) }, tunggakan: 3 },
+    { nama: "Ketut", hp: "081111000005", password: "ketut123", role: "anggota", tanggalBergabung: "2025-02-05", totalSimpanan: 500000, pinjaman: { jumlah: 500000, cicilanTerbayar: 1, jatuhTempoOffset: -20 }, tunggakan: 3 },
     { nama: "Nyoman", hp: "081111000006", password: "nyoman123", role: "anggota", tanggalBergabung: "2025-02-20", totalSimpanan: 800000, pinjaman: null, tunggakan: 0 },
-    { nama: "Putu", hp: "081111000007", password: "putu123", role: "anggota", tanggalBergabung: "2025-03-01", totalSimpanan: 650000, pinjaman: { jumlah: 2000000, cicilanTerbayar: 8, jatuhTempo: daysFromNow(2) }, tunggakan: 0 },
+    { nama: "Putu", hp: "081111000007", password: "putu123", role: "anggota", tanggalBergabung: "2025-03-01", totalSimpanan: 650000, pinjaman: { jumlah: 2000000, cicilanTerbayar: 8, jatuhTempoOffset: 2 }, tunggakan: 0 },
     { nama: "Kadek", hp: "081111000008", password: "kadek123", role: "anggota", tanggalBergabung: "2025-03-15", totalSimpanan: 400000, pinjaman: null, tunggakan: 0 },
     { nama: "Wayan Sari", hp: "081111000009", password: "sari123", role: "anggota", tanggalBergabung: "2025-04-01", totalSimpanan: 950000, pinjaman: null, tunggakan: 0 },
-    { nama: "Made Ayu", hp: "081111000010", password: "ayu123", role: "anggota", tanggalBergabung: "2025-04-01", totalSimpanan: 350000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 5, jatuhTempo: daysFromNow(9) }, tunggakan: 1 }
+    { nama: "Made Ayu", hp: "081111000010", password: "ayu123", role: "anggota", tanggalBergabung: "2025-04-01", totalSimpanan: 350000, pinjaman: { jumlah: 1000000, cicilanTerbayar: 5, jatuhTempoOffset: 9 }, tunggakan: 1 }
   ];
 
   const anggota = anggotaSeed.map((s, i) => ({
@@ -50,21 +50,42 @@ function buildSeedState() {
       totalCicilan: TOTAL_CICILAN,
       cicilanTerbayar: s.pinjaman.cicilanTerbayar,
       bungaPersenBulan: BUNGA_PERSEN,
-      jatuhTempo: s.pinjaman.jatuhTempo
+      jatuhTempo: daysFromNow(s.pinjaman.jatuhTempoOffset)
     } : null
   }));
 
-  const findId = (idx) => anggota[idx].id;
-
   const transaksi = [
-    { id: "T001", tanggal: daysFromNow(-1), anggotaId: findId(1), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T002", tanggal: daysFromNow(-22), anggotaId: findId(1), jenis: "pinjaman", jumlah: 1000000, arah: "keluar", keterangan: "Pencairan pinjaman" },
-    { id: "T003", tanggal: daysFromNow(-27), anggotaId: findId(1), jenis: "angsuran", jumlah: 101000, arah: "masuk", keterangan: "Angsuran ke-6" },
-    { id: "T004", tanggal: daysFromNow(-5), anggotaId: findId(2), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T005", tanggal: daysFromNow(-15), anggotaId: findId(6), jenis: "angsuran", jumlah: 220000, arah: "masuk", keterangan: "Angsuran ke-8" },
-    { id: "T006", tanggal: daysFromNow(-3), anggotaId: findId(3), jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
-    { id: "T007", tanggal: daysFromNow(-40), anggotaId: findId(4), jenis: "pinjaman", jumlah: 500000, arah: "keluar", keterangan: "Pencairan pinjaman" }
+    { id: "T001", tanggal: daysFromNow(-1), anggotaId: anggota[1].id, jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
+    { id: "T002", tanggal: daysFromNow(-5), anggotaId: anggota[2].id, jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" },
+    { id: "T003", tanggal: daysFromNow(-3), anggotaId: anggota[3].id, jenis: "setoran", jumlah: 50000, arah: "masuk", keterangan: "Setoran bulanan" }
   ];
+
+  /* Bangun pencairan + riwayat angsuran otomatis untuk tiap anggota
+     berpinjaman, konsisten dengan cicilanTerbayar & rumus angsuran
+     (bukan cuma satu-dua transaksi contoh) — supaya jumlah "X dari Y
+     kali" di UI selalu punya riwayat sebanyak X entri sungguhan,
+     bukan kelihatan bolong. Interval antar cicilan ~30 hari mundur
+     dari jatuh tempo berikutnya. */
+  anggotaSeed.forEach((s, i) => {
+    if (!s.pinjaman) return;
+    const a = anggota[i];
+    const { cicilanTerbayar, jatuhTempoOffset } = s.pinjaman;
+    const angsuran = angsuranPerBulan(a.pinjaman);
+    const disbursementOffset = jatuhTempoOffset - (cicilanTerbayar + 1) * 30;
+    transaksi.push({
+      id: "T" + String(transaksi.length + 1).padStart(3, "0"),
+      tanggal: daysFromNow(disbursementOffset), anggotaId: a.id, jenis: "pinjaman",
+      jumlah: s.pinjaman.jumlah, arah: "keluar", keterangan: "Pencairan pinjaman"
+    });
+    for (let k = 1; k <= cicilanTerbayar; k++) {
+      const offset = jatuhTempoOffset - (cicilanTerbayar - k + 1) * 30;
+      transaksi.push({
+        id: "T" + String(transaksi.length + 1).padStart(3, "0"),
+        tanggal: daysFromNow(offset), anggotaId: a.id, jenis: "angsuran",
+        jumlah: angsuran, arah: "masuk", keterangan: `Angsuran ke-${k}`
+      });
+    }
+  });
 
   const pengumuman = [
     { id: "P1", teks: "Pertemuan Bulanan 10 September di Balai Banjar", tanggal: daysFromNow(3) },
@@ -82,8 +103,8 @@ function buildSeedState() {
     pengajuanPinjaman: [],
     buktiPembayaran: [],
     auditLog: [
-      { id: "L1", actor: "Gede", aksi: "Menyetujui pinjaman Made sebesar Rp1.000.000", waktu: new Date(Date.now() - 22 * 86400000).toISOString() },
-      { id: "L2", actor: "Gede", aksi: "Menyetujui pinjaman Wayan sebesar Rp1.000.000", waktu: new Date(Date.now() - 60 * 86400000).toISOString() }
+      { id: "L1", actor: "Gede", aksi: "Menyetujui pinjaman Made sebesar Rp1.000.000", waktu: new Date(Date.now() - 206 * 86400000).toISOString() },
+      { id: "L2", actor: "Gede", aksi: "Menyetujui pinjaman Wayan sebesar Rp1.000.000", waktu: new Date(Date.now() - 126 * 86400000).toISOString() }
     ]
   };
 }
@@ -159,6 +180,26 @@ function kasTerkumpul() {
 function pinjamanBeredar() {
   return state.anggota.reduce((s, a) => s + (a.pinjaman ? sisaHutang(a.pinjaman) : 0), 0);
 }
+function totalSimpananAnggota() {
+  return state.anggota.reduce((s, a) => s + a.totalSimpanan, 0);
+}
+/* Neraca (balance sheet). Aset = Kas + Piutang Pinjaman (pokok yang
+   belum kembali). Kewajiban = Simpanan Anggota (dana titipan yang jadi
+   tanggungan koperasi ke anggota). Ekuitas dihitung sebagai SISA
+   (Aset − Kewajiban), bukan ditebak dari bunga per transaksi — supaya
+   neraca selalu balance secara definisi, sesuai persamaan akuntansi
+   dasar (Aset = Kewajiban + Ekuitas), dan tetap benar walau nominal
+   pembayaran yang diverifikasi admin tidak persis mengikuti rumus
+   angsuran. */
+function totalAsetNeraca() {
+  return kasTerkumpul() + pinjamanBeredar();
+}
+function totalKewajibanNeraca() {
+  return totalSimpananAnggota();
+}
+function ekuitasNeraca() {
+  return totalAsetNeraca() - totalKewajibanNeraca();
+}
 function anggotaMenunggak() { return state.anggota.filter(a => a.pinjaman && a.tunggakan >= 1).length; }
 function jatuhTempoBulanIni() {
   const now = new Date();
@@ -168,6 +209,67 @@ function jatuhTempoBulanIni() {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 }
+/* Riwayat angsuran untuk pinjaman yang SEDANG aktif milik satu anggota.
+   Transaksi tidak menyimpan id pinjaman, tapi karena anggota hanya boleh
+   punya satu pinjaman aktif sekaligus (pinjaman baru hanya bisa diajukan
+   setelah pinjaman lama lunas), N transaksi "angsuran" terakhir milik
+   anggota ini (N = cicilanTerbayar pinjaman aktif) pasti pembayaran
+   untuk pinjaman yang sedang berjalan. */
+function riwayatAngsuranAktif(a) {
+  if (!a.pinjaman || a.pinjaman.cicilanTerbayar === 0) return [];
+  const semua = state.transaksi
+    .filter(t => t.anggotaId === a.id && t.jenis === "angsuran")
+    .sort((x, y) => new Date(x.tanggal) - new Date(y.tanggal));
+  return semua.slice(-a.pinjaman.cicilanTerbayar);
+}
+
+/* Baris "nama - status jatuh tempo - sisa hutang" dipakai bersama oleh
+   list "Menunggak & Jatuh Tempo" (tab Pinjaman) dan modal drilldown dari
+   stat card Home, supaya tampilannya konsisten dan tidak dobel logika. */
+function buildPinjamanStatusRows(anggotaList) {
+  const now = new Date();
+  return anggotaList
+    .map(a => {
+      const diffDays = Math.ceil((new Date(a.pinjaman.jatuhTempo) - now) / 86400000);
+      return { a, diffDays, st: statusPinjaman(a) };
+    })
+    .sort((x, y) => {
+      if (x.a.tunggakan !== y.a.tunggakan) return y.a.tunggakan - x.a.tunggakan;
+      return x.diffDays - y.diffDays;
+    });
+}
+function renderPinjamanStatusList(containerEl, rows, emptyText) {
+  if (rows.length === 0) {
+    containerEl.innerHTML = `<div class="activity-empty">${emptyText}</div>`;
+    return;
+  }
+  containerEl.innerHTML = rows.map(x => {
+    const tempoLabel = x.diffDays < 0
+      ? `Terlambat ${Math.abs(x.diffDays)} hari`
+      : x.diffDays === 0 ? "Jatuh tempo hari ini" : `Jatuh tempo ${x.diffDays} hari lagi`;
+    return `
+    <div class="activity-item" data-member="${x.a.id}" style="cursor:pointer">
+      <div class="activity-icon ${x.diffDays < 0 ? "out" : "in"}">${x.diffDays < 0 ? "⚠️" : "📄"}</div>
+      <div class="activity-main">
+        <div class="activity-title">${x.a.nama}</div>
+        <div class="activity-sub">${tempoLabel} · ${formatDate(x.a.pinjaman.jatuhTempo)} · sisa ${formatRupiah(sisaHutang(x.a.pinjaman))}</div>
+      </div>
+      <div class="status-pill ${x.st.cls}">${x.st.label}</div>
+    </div>`;
+  }).join("");
+  containerEl.querySelectorAll("[data-member]").forEach(el => {
+    el.addEventListener("click", () => {
+      document.getElementById("statDrilldownOverlay").hidden = true;
+      openMemberDetail(el.dataset.member);
+    });
+  });
+}
+function openStatDrilldown(title, anggotaList, emptyText) {
+  document.getElementById("statDrilldownTitle").textContent = title;
+  renderPinjamanStatusList(document.getElementById("statDrilldownList"), buildPinjamanStatusRows(anggotaList), emptyText);
+  document.getElementById("statDrilldownOverlay").hidden = false;
+}
+
 function pengingatList() {
   const now = new Date();
   return state.anggota
@@ -250,6 +352,9 @@ function renderHome() {
   document.getElementById("statJatuhTempo").textContent = jatuhTempoBulanIni() + " anggota";
 
   document.getElementById("addPengumumanBtn").hidden = !isAdmin();
+  ["cardPinjamanBeredar", "cardMenunggak", "cardJatuhTempo"].forEach(id => {
+    document.getElementById(id).classList.toggle("clickable", isAdmin());
+  });
 
   const list = document.getElementById("pengumumanList");
   if (state.pengumuman.length === 0) {
@@ -327,6 +432,18 @@ function renderPinjaman() {
   if (u.pinjaman) {
     const p = u.pinjaman;
     const pct = Math.round((p.cicilanTerbayar / p.totalCicilan) * 100);
+    const riwayat = riwayatAngsuranAktif(u);
+    const riwayatHtml = riwayat.length === 0
+      ? `<div class="activity-empty">Belum ada pembayaran untuk pinjaman ini.</div>`
+      : `<div class="activity-list">${riwayat.map((t, i) => `
+        <div class="activity-item">
+          <div class="activity-icon in">📄</div>
+          <div class="activity-main">
+            <div class="activity-title">Angsuran ke-${i + 1}</div>
+            <div class="activity-sub">${formatDate(t.tanggal)}</div>
+          </div>
+          <div class="activity-amount in">+${formatRupiah(t.jumlah)}</div>
+        </div>`).join("")}</div>`;
     block.innerHTML = `
       <div class="section-heading">Pinjaman Aktif</div>
       <div class="chart-card">
@@ -339,11 +456,23 @@ function renderPinjaman() {
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
         <div class="progress-label">${pct}% · ${p.cicilanTerbayar}/${p.totalCicilan} pembayaran</div>
         <div class="progress-label" style="margin-top:8px">Jatuh tempo: ${formatDate(p.jatuhTempo)} · Angsuran/bulan: ${formatRupiah(angsuranPerBulan(p))}</div>
-      </div>`;
+      </div>
+      <div class="md-section-title">Riwayat Pembayaran (${p.cicilanTerbayar} dari ${p.totalCicilan} kali)</div>
+      ${riwayatHtml}`;
   } else {
     block.innerHTML = `
       <div class="section-heading">Pinjaman Aktif</div>
       <div class="empty-state" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius)">Anda tidak memiliki pinjaman aktif.</div>`;
+  }
+
+  const statusBlock = document.getElementById("statusPinjamanBlock");
+  statusBlock.hidden = !isAdmin();
+  if (isAdmin()) {
+    renderPinjamanStatusList(
+      document.getElementById("statusPinjamanList"),
+      buildPinjamanStatusRows(state.anggota.filter(a => a.pinjaman)),
+      "Tidak ada anggota dengan pinjaman aktif."
+    );
   }
 
   const approvalBlock = document.getElementById("approvalPinjamanBlock");
@@ -571,7 +700,24 @@ function openMemberDetail(id) {
       <div class="md-stat"><div class="md-stat-label">Sisa Pinjaman</div><div class="md-stat-value">${a.pinjaman ? formatRupiah(sisaHutang(a.pinjaman)) : "-"}</div></div>
     </div>
 
-    <div class="md-section-title">Riwayat Transaksi</div>
+    ${a.pinjaman ? `
+    <div class="md-section-title">Riwayat Pembayaran (${a.pinjaman.cicilanTerbayar} dari ${a.pinjaman.totalCicilan} kali) · Jatuh tempo ${formatDate(a.pinjaman.jatuhTempo)}</div>
+    <div class="activity-list">${
+      riwayatAngsuranAktif(a).length === 0
+        ? `<div class="activity-empty">Belum ada pembayaran untuk pinjaman ini.</div>`
+        : riwayatAngsuranAktif(a).map((t, i) => `
+          <div class="activity-item">
+            <div class="activity-icon in">📄</div>
+            <div class="activity-main">
+              <div class="activity-title">Angsuran ke-${i + 1}</div>
+              <div class="activity-sub">${formatDate(t.tanggal)}</div>
+            </div>
+            <div class="activity-amount in">+${formatRupiah(t.jumlah)}</div>
+          </div>`).join("")
+    }</div>
+    ` : ""}
+
+    <div class="md-section-title">Riwayat Transaksi (Semua)</div>
     <div class="activity-list">${riwayatHtml}</div>
 
     ${isAdmin() ? `
@@ -596,8 +742,10 @@ function openMemberDetail(id) {
 /* ===== LAINNYA ===== */
 const LAINNYA_ITEMS = [
   { key: "bukukas", icon: "📒", label: "Buku Kas", adminOnly: false },
+  { key: "neraca", icon: "⚖️", label: "Neraca Keuangan", adminOnly: false },
   { key: "timeline", icon: "🗓️", label: "Timeline Periode", adminOnly: false },
   { key: "auditlog", icon: "🧾", label: "Audit Log", adminOnly: false },
+  { key: "unduhLaporan", icon: "⬇️", label: "Unduh Laporan Keuangan (PDF)", adminOnly: false },
   { key: "peran", icon: "🔁", label: "Lihat Sebagai (Demo)", adminOnly: false },
   { key: "tentang", icon: "ℹ️", label: "Tentang & Keterbatasan", adminOnly: false },
   { key: "keluar", icon: "🚪", label: "Keluar", adminOnly: false, danger: true }
@@ -618,6 +766,7 @@ function renderLainnya() {
     menuEl.querySelectorAll(".menu-item").forEach(el => {
       el.addEventListener("click", () => {
         if (el.dataset.key === "keluar") { logout(); return; }
+        if (el.dataset.key === "unduhLaporan") { generateLaporanKeuanganPDF(); return; }
         lainnyaView = el.dataset.key;
         renderLainnya();
       });
@@ -629,11 +778,187 @@ function renderLainnya() {
     document.getElementById("lainnyaBackBtn").addEventListener("click", () => { lainnyaView = "menu"; renderLainnya(); });
     const content = document.getElementById("lainnyaSubContent");
     if (lainnyaView === "bukukas") renderBukuKas(content);
+    if (lainnyaView === "neraca") renderNeraca(content);
     if (lainnyaView === "timeline") renderTimeline(content);
     if (lainnyaView === "auditlog") renderAuditLog(content);
     if (lainnyaView === "peran") renderPeranSwitch(content);
     if (lainnyaView === "tentang") renderTentang(content);
   }
+}
+
+/* ===== Unduh Laporan Keuangan (PDF) =====
+   jsPDF + autoTable di-vendor lokal (assets/vendor/), bukan CDN, supaya
+   fitur ini tetap jalan tanpa internet — konsisten dengan arsitektur
+   client-only aplikasi ini. Transaksi yang dibatalkan (t.dibatalkan)
+   sengaja dikecualikan dari Buku Kas & saldo berjalan di laporan, sama
+   seperti seharusnya diperlakukan kas sungguhan. */
+function generateLaporanKeuanganPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 14;
+  let y = 16;
+
+  const u = currentUser();
+  const TEAL = [15, 118, 110];
+
+  const ensureSpace = (needed) => {
+    if (y + needed > pageHeight - 16) { doc.addPage(); y = 16; }
+  };
+  const sectionTitle = (text) => {
+    doc.setFontSize(11);
+    doc.setFont(undefined, "bold");
+    doc.text(text, marginX, y);
+    doc.setFont(undefined, "normal");
+    y += 2;
+  };
+
+  doc.setFontSize(15);
+  doc.setFont(undefined, "bold");
+  doc.text("SEKE MESARI", marginX, y);
+  doc.setFontSize(11);
+  doc.setFont(undefined, "normal");
+  y += 6;
+  doc.text("Laporan Keuangan — Arisan & Pinjaman Keluarga", marginX, y);
+  y += 6;
+  doc.setFontSize(8.5);
+  doc.setTextColor(90);
+  doc.text(
+    `Periode ke-${state.periodeSekarang} dari ${state.totalPeriode}  ·  Dicetak: ${formatDateTime(nowIso())}  ·  Oleh: ${u ? u.nama + " (" + (u.role === "admin" ? "Admin/Bendahara" : "Anggota") + ")" : "-"}`,
+    marginX, y
+  );
+  doc.setTextColor(0);
+  y += 7;
+
+  /* 1. Ringkasan Neraca */
+  const kas = kasTerkumpul();
+  const piutang = pinjamanBeredar();
+  const aset = totalAsetNeraca();
+  const simpanan = totalSimpananAnggota();
+  const ekuitas = ekuitasNeraca();
+  const seimbang = Math.round(aset) === Math.round(simpanan + ekuitas);
+
+  sectionTitle("1. Ringkasan Neraca Keuangan");
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["Pos", "Nilai"]],
+    body: [
+      ["Kas Koperasi", formatRupiah(kas)],
+      ["Piutang Pinjaman Anggota", formatRupiah(piutang)],
+      ["Total Aset", formatRupiah(aset)],
+      ["Simpanan Anggota (Kewajiban)", formatRupiah(simpanan)],
+      ["SHU / Laba Ditahan (Ekuitas)", formatRupiah(ekuitas)],
+      ["Total Kewajiban + Ekuitas", formatRupiah(simpanan + ekuitas)]
+    ],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: TEAL },
+    didParseCell: (data) => {
+      if (data.section === "body" && (data.row.index === 2 || data.row.index === 5)) {
+        data.cell.styles.fontStyle = "bold";
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY + 4;
+  doc.setFontSize(8);
+  doc.setFont(undefined, "italic");
+  doc.setTextColor(seimbang ? 90 : 200, seimbang ? 90 : 40, seimbang ? 90 : 40);
+  doc.text(
+    seimbang ? "Neraca seimbang (Total Aset = Total Kewajiban + Ekuitas)." : "PERINGATAN: Neraca TIDAK seimbang — periksa data transaksi.",
+    marginX, y
+  );
+  doc.setTextColor(0);
+  doc.setFont(undefined, "normal");
+  y += 7;
+
+  /* 2. Rincian Piutang Pinjaman per Anggota */
+  ensureSpace(30);
+  const peminjam = state.anggota.filter(a => a.pinjaman);
+  sectionTitle("2. Rincian Piutang Pinjaman per Anggota");
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["No", "Nama", "Pinjaman Awal", "Cicilan", "Sisa Hutang", "Jatuh Tempo", "Status"]],
+    body: peminjam.length
+      ? peminjam.map((a, i) => [
+          i + 1, a.nama, formatRupiah(a.pinjaman.jumlah),
+          `${a.pinjaman.cicilanTerbayar}/${a.pinjaman.totalCicilan}`,
+          formatRupiah(sisaHutang(a.pinjaman)), formatDate(a.pinjaman.jatuhTempo),
+          statusPinjaman(a).label
+        ])
+      : [["-", "Tidak ada anggota dengan pinjaman aktif.", "", "", "", "", ""]],
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: TEAL }
+  });
+  y = doc.lastAutoTable.finalY + 7;
+
+  /* 3. Rincian Simpanan & Status Keanggotaan */
+  ensureSpace(30);
+  sectionTitle("3. Rincian Simpanan & Status Keanggotaan");
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["No", "Nama", "Total Simpanan", "Status", "Skor Kepatuhan"]],
+    body: state.anggota.map((a, i) => [i + 1, a.nama, formatRupiah(a.totalSimpanan), statusPinjaman(a).label, skorKepatuhan(a)]),
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: TEAL }
+  });
+  y = doc.lastAutoTable.finalY + 7;
+
+  /* 4. Buku Kas — riwayat transaksi lengkap dengan saldo berjalan */
+  ensureSpace(30);
+  sectionTitle("4. Buku Kas — Riwayat Transaksi Lengkap");
+  const jenisLabel = { setoran: "Setoran", pinjaman: "Pencairan Pinjaman", angsuran: "Angsuran" };
+  const aktif = state.transaksi.filter(t => !t.dibatalkan).sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+  let saldo = state.kasTerkumpulAwal;
+  const bukuKasRows = aktif.map((t, i) => {
+    saldo += t.arah === "masuk" ? t.jumlah : -t.jumlah;
+    return [
+      i + 1, formatDate(t.tanggal), getAnggota(t.anggotaId)?.nama || "-", jenisLabel[t.jenis] || t.jenis,
+      t.arah === "masuk" ? formatRupiah(t.jumlah) : "-",
+      t.arah === "keluar" ? formatRupiah(t.jumlah) : "-",
+      formatRupiah(saldo)
+    ];
+  });
+  const dibatalkanCount = state.transaksi.length - aktif.length;
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["No", "Tanggal", "Anggota", "Jenis", "Masuk", "Keluar", "Saldo"]],
+    body: bukuKasRows,
+    foot: [
+      ["", "", "", "Saldo Kas Awal", "", "", formatRupiah(state.kasTerkumpulAwal)],
+      ["", "", "", "Saldo Kas Akhir", "", "", formatRupiah(saldo)]
+    ],
+    styles: { fontSize: 7.5 },
+    headStyles: { fillColor: TEAL },
+    footStyles: { fontStyle: "bold", fillColor: [240, 240, 240], textColor: 20 }
+  });
+  y = doc.lastAutoTable.finalY + 4;
+  if (dibatalkanCount > 0) {
+    ensureSpace(6);
+    doc.setFontSize(8);
+    doc.text(`Catatan: ${dibatalkanCount} transaksi dibatalkan tidak dihitung di atas, tetap tercatat di Audit Log.`, marginX, y);
+    y += 5;
+  }
+
+  /* Footer tiap halaman */
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7);
+    doc.setTextColor(120);
+    doc.text("Laporan dibuat otomatis oleh aplikasi SEKE MESARI dari data lokal perangkat — bukan dokumen resmi bermaterai.", marginX, pageHeight - 10);
+    doc.text(`Halaman ${p} dari ${pageCount}`, pageWidth - marginX, pageHeight - 10, { align: "right" });
+    doc.setTextColor(0);
+  }
+
+  const filename = `Laporan-Keuangan-SEKE-MESARI-Periode${state.periodeSekarang}-${todayIso()}.pdf`;
+  doc.save(filename);
+  logAudit(`Mengunduh Laporan Keuangan (PDF) periode ke-${state.periodeSekarang}`);
+  saveState(state);
+  showToast("Laporan keuangan sedang diunduh...");
 }
 
 function renderBukuKas(content) {
@@ -659,6 +984,55 @@ function renderBukuKas(content) {
       </table>
     </div>
     <div class="form-note" style="margin-top:10px">Transaksi tidak pernah dihapus — hanya dapat dibatalkan (audit trail tetap tersimpan).</div>
+  `;
+}
+
+function renderNeraca(content) {
+  const kas = kasTerkumpul();
+  const piutang = pinjamanBeredar();
+  const aset = totalAsetNeraca();
+  const simpanan = totalSimpananAnggota();
+  const ekuitas = ekuitasNeraca();
+  const kewajibanEkuitas = simpanan + ekuitas;
+
+  content.innerHTML = `
+    <div class="neraca-card">
+      <div class="neraca-heading">ASET</div>
+      <div class="neraca-row">
+        <div class="neraca-label">Kas Koperasi</div>
+        <div class="neraca-value">${formatRupiah(kas)}</div>
+      </div>
+      <div class="neraca-row">
+        <div class="neraca-label">Piutang Pinjaman Anggota</div>
+        <div class="neraca-value">${formatRupiah(piutang)}</div>
+      </div>
+      <div class="neraca-row neraca-total">
+        <div class="neraca-label">Total Aset</div>
+        <div class="neraca-value">${formatRupiah(aset)}</div>
+      </div>
+    </div>
+
+    <div class="neraca-card" style="margin-top:12px">
+      <div class="neraca-heading">KEWAJIBAN &amp; EKUITAS</div>
+      <div class="neraca-row">
+        <div class="neraca-label">Simpanan Anggota</div>
+        <div class="neraca-value">${formatRupiah(simpanan)}</div>
+      </div>
+      <div class="neraca-row">
+        <div class="neraca-label">SHU / Laba Ditahan</div>
+        <div class="neraca-value">${formatRupiah(ekuitas)}</div>
+      </div>
+      <div class="neraca-row neraca-total">
+        <div class="neraca-label">Total Kewajiban &amp; Ekuitas</div>
+        <div class="neraca-value">${formatRupiah(kewajibanEkuitas)}</div>
+      </div>
+    </div>
+
+    <div class="neraca-balance-badge">✓ Neraca seimbang — Total Aset = Total Kewajiban &amp; Ekuitas</div>
+
+    <div class="form-note" style="margin-top:14px">
+      "SHU / Laba Ditahan" dihitung otomatis sebagai selisih Total Aset dikurangi Simpanan Anggota — bukan angka tebakan, jadi neraca ini selalu balance sesuai persamaan akuntansi dasar (Aset = Kewajiban + Ekuitas). Ini snapshot posisi keuangan saat ini; untuk riwayat transaksi kronologis lihat Buku Kas.
+    </div>
   `;
 }
 
@@ -824,14 +1198,58 @@ function initAnggotaModal() {
   });
 }
 
-/* ===== Add Pengumuman ===== */
+/* ===== Stat card drilldown (Home, admin-only) ===== */
+function initStatDrilldown() {
+  document.getElementById("statDrilldownCloseBtn").addEventListener("click", () => {
+    document.getElementById("statDrilldownOverlay").hidden = true;
+  });
+  document.getElementById("statDrilldownOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "statDrilldownOverlay") document.getElementById("statDrilldownOverlay").hidden = true;
+  });
+  document.getElementById("cardPinjamanBeredar").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    openStatDrilldown("Pinjaman Beredar — Semua Peminjam", state.anggota.filter(a => a.pinjaman), "Tidak ada anggota dengan pinjaman aktif.");
+  });
+  document.getElementById("cardMenunggak").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    openStatDrilldown("Anggota Menunggak", state.anggota.filter(a => a.pinjaman && a.tunggakan >= 1), "Tidak ada anggota yang menunggak.");
+  });
+  document.getElementById("cardJatuhTempo").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    const now = new Date();
+    const list = state.anggota.filter(a => {
+      if (!a.pinjaman) return false;
+      const d = new Date(a.pinjaman.jatuhTempo);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    openStatDrilldown("Jatuh Tempo Bulan Ini", list, "Tidak ada anggota jatuh tempo bulan ini.");
+  });
+}
+
+/* ===== Add Pengumuman =====
+   Pakai modal sendiri, bukan window.prompt() — di dalam iframe (artifact)
+   maupun sebagian in-app browser mobile, prompt()/alert()/confirm() bisa
+   diblokir sandbox dan langsung return null tanpa error terlihat. */
 function initPengumumanModal() {
   document.getElementById("addPengumumanBtn").addEventListener("click", () => {
-    const teks = prompt("Isi pengumuman:");
-    if (!teks || !teks.trim()) return;
-    state.pengumuman.push({ id: "P" + (state.pengumuman.length + 1), teks: teks.trim(), tanggal: todayIso() });
-    logAudit(`Menambahkan pengumuman: ${teks.trim()}`);
+    document.getElementById("pengumumanForm").reset();
+    document.getElementById("pengumumanModalOverlay").hidden = false;
+  });
+  document.getElementById("pengumumanModalCloseBtn").addEventListener("click", () => {
+    document.getElementById("pengumumanModalOverlay").hidden = true;
+  });
+  document.getElementById("pengumumanModalOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "pengumumanModalOverlay") document.getElementById("pengumumanModalOverlay").hidden = true;
+  });
+  document.getElementById("pengumumanForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const teks = document.getElementById("pengumumanTeks").value.trim();
+    if (!teks) return;
+    state.pengumuman.push({ id: "P" + (state.pengumuman.length + 1), teks, tanggal: todayIso() });
+    logAudit(`Menambahkan pengumuman: ${teks}`);
     saveState(state);
+    document.getElementById("pengumumanModalOverlay").hidden = true;
+    showToast("Pengumuman ditambahkan.");
     renderHome();
   });
 }
@@ -873,6 +1291,7 @@ function init() {
   initBuktiModal();
   initAnggotaModal();
   initPengumumanModal();
+  initStatDrilldown();
 
   document.querySelectorAll(".nav-item").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
 

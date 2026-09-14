@@ -42,19 +42,55 @@ Keamanan di bawah untuk alasannya.
   (total anggota, kas terkumpul, pinjaman beredar, anggota menunggak,
   jatuh tempo bulan ini), dan pengumuman.
 - **Pinjaman** — kartu pinjaman aktif (jumlah, bunga, sisa cicilan,
-  sisa hutang, progress bar, jatuh tempo), tombol Ajukan Pinjaman &
-  Upload Bukti Bayar; admin melihat & memutuskan pengajuan yang menunggu.
+  sisa hutang, progress bar, jatuh tempo) + **riwayat pembayaran bernomor
+  urut** (angsuran ke berapa, tanggal, jumlah) untuk anggota melihat
+  pinjamannya sendiri; tombol Ajukan Pinjaman & Upload Bukti Bayar. Admin
+  melihat daftar **Menunggak & Jatuh Tempo** (semua anggota berpinjaman,
+  diurutkan dari yang paling perlu perhatian) dan memutuskan pengajuan
+  yang menunggu.
 - **Pembayaran** — upload bukti pembayaran, status verifikasi, histori
   transaksi (filter Semua/Setoran/Pinjaman/Angsuran); admin memverifikasi
   bukti yang masuk.
 - **Anggota** — transparansi publik: status tiap anggota (Lancar/
   Menunggak Nx/Perlu Evaluasi Keanggotaan) dengan kode warna, klik untuk
-  detail (skor kepatuhan, riwayat transaksi); admin bisa tambah/nonaktifkan
+  detail (skor kepatuhan, riwayat pembayaran bernomor urut + tanggal jatuh
+  tempo, riwayat transaksi lengkap); admin bisa tambah/nonaktifkan
   anggota.
 - **Lainnya** — Buku Kas (ledger masuk/keluar, transaksi hanya bisa
-  dibatalkan, tidak dihapus), Timeline Periode (1–10), Audit Log,
-  "Lihat Sebagai" (demo ganti peran admin/anggota tanpa logout), Tentang
-  & Keterbatasan, Keluar.
+  dibatalkan, tidak dihapus), Neraca Keuangan (snapshot posisi keuangan:
+  Aset vs Kewajiban & Ekuitas, format dua kolom), **Unduh Laporan
+  Keuangan (PDF)** — laporan detail siap cetak/arsip (lihat bagian
+  tersendiri di bawah), Timeline Periode (1–10), Audit Log, "Lihat
+  Sebagai" (demo ganti peran admin/anggota tanpa logout), Tentang &
+  Keterbatasan, Keluar.
+- Dashboard **Home**: 3 stat card (Pinjaman Beredar, Anggota Menunggak,
+  Jatuh Tempo Bulan Ini) bisa diklik admin untuk melihat daftar anggota
+  terkait langsung, tanpa harus pindah tab.
+
+## Laporan Keuangan (PDF)
+
+Menu Lainnya → **Unduh Laporan Keuangan (PDF)** menghasilkan satu berkas
+PDF berisi:
+
+1. Ringkasan Neraca Keuangan (Aset, Kewajiban, Ekuitas) + status
+   seimbang/tidak.
+2. Rincian piutang pinjaman per anggota (pinjaman awal, cicilan, sisa
+   hutang, jatuh tempo, status).
+3. Rincian simpanan & status keanggotaan per anggota (termasuk skor
+   kepatuhan).
+4. Buku Kas — riwayat transaksi lengkap **dengan saldo berjalan**
+   (running balance), urut tanggal, transaksi yang dibatalkan
+   dikecualikan dari perhitungan (sesuai audit trail).
+
+Setiap laporan mencatat kapan dan oleh siapa laporan itu diunduh (masuk
+ke Audit Log), serta mencantumkan disclaimer bahwa ini dokumen yang
+dihasilkan otomatis dari data lokal aplikasi, bukan dokumen resmi
+bermaterai.
+
+Library pembuat PDF (`jsPDF` + `jspdf-autotable`) **di-bundle lokal** di
+`assets/vendor/`, bukan dimuat dari CDN — supaya fitur ini tetap
+berfungsi tanpa koneksi internet, konsisten dengan prinsip aplikasi ini
+yang berjalan sepenuhnya di browser.
 
 ## Aturan bisnis yang diterapkan
 
@@ -64,13 +100,21 @@ Keamanan di bawah untuk alasannya.
   1–2 = Menunggak Nx, ≥3 = **Perlu Evaluasi Keanggotaan** (bukan
   penghapusan otomatis — keputusan tetap di tangan admin).
 - Skor kepatuhan = `100 − (tunggakan × 15)`, minimum 35.
+- **Neraca Keuangan**: Aset = Kas Koperasi + Piutang Pinjaman Anggota
+  (pokok yang belum kembali). Kewajiban = total Simpanan Anggota. Ekuitas
+  ("SHU / Laba Ditahan") dihitung sebagai *selisih* Aset dikurangi
+  Kewajiban — bukan ditebak dari bunga per transaksi — sehingga neraca
+  selalu balance sesuai persamaan akuntansi dasar (Aset = Kewajiban +
+  Ekuitas), bahkan saat admin memverifikasi nominal pembayaran yang tidak
+  persis mengikuti rumus angsuran.
 
 ## Struktur Berkas
 
 ```
-index.html        markup + 5 tab panel + modal (pinjaman, bukti, anggota) + login screen
-assets/style.css  tema, layout mobile-first, dark mode
-assets/app.js     data contoh, state, autentikasi (simulasi), rendering, logika bisnis
+index.html          markup + 5 tab panel + modal (pinjaman, bukti, anggota) + login screen
+assets/style.css    tema, layout mobile-first, dark mode
+assets/app.js       data contoh, state, autentikasi (simulasi), rendering, logika bisnis
+assets/vendor/      jsPDF + jspdf-autotable (di-bundle lokal untuk fitur Unduh Laporan)
 ```
 
 ## Keamanan (batasan yang disengaja, bukan sekadar "belum sempat")

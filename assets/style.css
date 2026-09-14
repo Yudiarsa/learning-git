@@ -298,6 +298,8 @@ button, input, select { font-family: inherit; }
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
 }
+.stat-card.clickable { cursor: pointer; transition: transform 0.1s ease; }
+.stat-card.clickable:active { transform: scale(0.97); }
 .stat-icon { font-size: 18px; margin-bottom: 6px; }
 .stat-label { font-size: 12px; color: var(--text-muted); }
 .stat-value { font-size: 17px; font-weight: 700; margin-top: 2px; }
@@ -602,13 +604,13 @@ tr.dibatalkan td { text-decoration: line-through; opacity: 0.5; }
   margin-bottom: 16px;
 }
 .modal-header h3 { margin: 0; font-size: 16px; }
-#pinjamanForm label, #buktiForm label, #anggotaForm label {
+#pinjamanForm label, #buktiForm label, #anggotaForm label, #pengumumanForm label {
   display: block;
   font-size: 12px;
   color: var(--text-muted);
   margin: 12px 0 6px;
 }
-#pinjamanForm input, #buktiForm input, #anggotaForm input {
+#pinjamanForm input, #buktiForm input, #anggotaForm input, #pengumumanForm textarea {
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
@@ -616,6 +618,8 @@ tr.dibatalkan td { text-decoration: line-through; opacity: 0.5; }
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
 }
 .form-note { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
 .bukti-preview {
@@ -710,6 +714,59 @@ tr.dibatalkan td { text-decoration: line-through; opacity: 0.5; }
   border-radius: 10px;
   cursor: pointer;
   font-size: 15px;
+}
+
+/* ===== Neraca (balance sheet) ===== */
+.neraca-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.neraca-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.neraca-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.neraca-row:last-child { border-bottom: none; }
+.neraca-label { font-size: 13px; color: var(--text); }
+.neraca-value {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.neraca-row.neraca-total {
+  border-top: 2px solid var(--text);
+  border-bottom: none;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+.neraca-row.neraca-total .neraca-label,
+.neraca-row.neraca-total .neraca-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.neraca-balance-badge {
+  margin-top: 12px;
+  background: var(--green-bg);
+  color: var(--green);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
 }
 
 /* ===== Timeline periode ===== */
