@@ -162,16 +162,21 @@ alter table public.pengaturan enable row level security;
 -- aman dijalankan berulang kali (Postgres tidak punya "create policy if not
 -- exists" bawaan).
 
--- anggota: semua yang login boleh baca; daftar sendiri (insert baris sendiri);
--- admin boleh update siapa saja, anggota boleh update baris sendiri terbatas.
+-- anggota: semua yang login boleh baca; daftar sendiri (insert baris sendiri,
+-- selalu sebagai role 'anggota'); hanya admin yang boleh update (nonaktifkan,
+-- ubah role, dst) — anggota TIDAK punya jalur update baris sendiri sama
+-- sekali, supaya tidak ada celah mengubah role/simpanan/tunggakan sendiri
+-- lewat panggilan API langsung.
 drop policy if exists "anggota_select_all" on public.anggota;
 create policy "anggota_select_all" on public.anggota for select to authenticated using (true);
+-- PENTING: wajib cek role='anggota' juga, bukan cuma id=auth.uid() —
+-- kalau tidak, siapapun yang daftar bisa set role sendiri jadi 'admin'
+-- langsung lewat API/console browser, melewati form aplikasi.
 drop policy if exists "anggota_insert_self" on public.anggota;
-create policy "anggota_insert_self" on public.anggota for insert to authenticated with check (id = auth.uid());
+create policy "anggota_insert_self" on public.anggota for insert to authenticated with check (id = auth.uid() and role = 'anggota');
 drop policy if exists "anggota_update_admin" on public.anggota;
 create policy "anggota_update_admin" on public.anggota for update to authenticated using (public.is_admin());
 drop policy if exists "anggota_update_self" on public.anggota;
-create policy "anggota_update_self" on public.anggota for update to authenticated using (id = auth.uid());
 
 -- pinjaman, transaksi, pengajuan_pinjaman, bukti_pembayaran, pengumuman: baca semua
 drop policy if exists "pinjaman_select_all" on public.pinjaman;

@@ -6,35 +6,30 @@ dan audit trail — dengan tampilan mobile-first bergaya aplikasi fintech.
 
 ## Menjalankan
 
-Aplikasi ini adalah static site (HTML/CSS/JS murni, tanpa build step).
-Buka `index.html` langsung di browser, atau jalankan server statis lokal:
+Frontend-nya static site (HTML/CSS/JS murni, tanpa build step), tapi
+aplikasi ini **butuh koneksi internet** karena data tersimpan di backend
+Supabase (Postgres + Auth + Storage), bukan lagi di `localStorage`.
 
 ```bash
 python3 -m http.server 8000
 # lalu buka http://localhost:8000
 ```
 
-Data disimpan di `localStorage` browser (per perangkat/browser), diisi
-otomatis dengan **data contoh** saat pertama kali dibuka.
+Setup Supabase (sekali saja, per instalasi): ikuti `supabase/SETUP.md`.
 
-## Login demo
+## Login & Daftar
 
-Login (HP + password, satu langkah, tanpa OTP) hanya untuk membedakan
-tampilan tiap anggota — bukan sistem otentikasi sungguhan. Lihat bagian
-Keamanan di bawah untuk alasannya.
+Anggota mendaftar sendiri lewat tombol **"Belum punya akun? Daftar di
+sini"** di layar login (nama, nomor HP, password) — admin tidak perlu
+tahu/mengisi data anggota sebelumnya. Akun baru otomatis berperan
+**anggota**; admin pertama harus di-set manual sekali lewat SQL (lihat
+`supabase/SETUP.md` langkah 5) — ini sengaja, supaya tidak ada yang bisa
+mengangkat diri sendiri jadi admin.
 
-| Nama | HP | Password | Peran |
-|---|---|---|---|
-| Gede | 081111000001 | admin123 | Admin |
-| Made | 081111000002 | made123 | Anggota (pinjaman lancar) |
-| Wayan | 081111000003 | wayan123 | Anggota (menunggak 2x) |
-| Komang | 081111000004 | komang123 | Anggota (tanpa pinjaman) |
-| Ketut | 081111000005 | ketut123 | Anggota (perlu evaluasi) |
-| Nyoman | 081111000006 | nyoman123 | Anggota (tanpa pinjaman) |
-| Putu | 081111000007 | putu123 | Anggota (pinjaman lancar) |
-| Kadek | 081111000008 | kadek123 | Anggota (tanpa pinjaman) |
-| Wayan Sari | 081111000009 | sari123 | Anggota (tanpa pinjaman) |
-| Made Ayu | 081111000010 | ayu123 | Anggota (menunggak 1x) |
+Login pakai nomor HP + password yang didaftarkan sendiri. Di balik layar,
+nomor HP dipetakan ke email sintetis (`08xxxx@sekemesari.local`) supaya
+bisa memakai sistem Supabase Auth (hash password + session token) tanpa
+perlu SMS OTP berbayar.
 
 ## Struktur Menu (5 Tab)
 
@@ -54,8 +49,8 @@ Keamanan di bawah untuk alasannya.
 - **Anggota** — transparansi publik: status tiap anggota (Lancar/
   Menunggak Nx/Perlu Evaluasi Keanggotaan) dengan kode warna, klik untuk
   detail (skor kepatuhan, riwayat pembayaran bernomor urut + tanggal jatuh
-  tempo, riwayat transaksi lengkap); admin bisa tambah/nonaktifkan
-  anggota.
+  tempo, riwayat transaksi lengkap); admin bisa menonaktifkan anggota
+  (anggota baru masuk lewat pendaftaran mandiri, bukan ditambahkan admin).
 - **Lainnya** — Buku Kas (ledger masuk/keluar, transaksi hanya bisa
   dibatalkan, tidak dihapus), Neraca Keuangan (snapshot posisi keuangan:
   Aset vs Kewajiban & Ekuitas, format dua kolom), **Unduh Laporan
@@ -87,10 +82,9 @@ ke Audit Log), serta mencantumkan disclaimer bahwa ini dokumen yang
 dihasilkan otomatis dari data lokal aplikasi, bukan dokumen resmi
 bermaterai.
 
-Library pembuat PDF (`jsPDF` + `jspdf-autotable`) **di-bundle lokal** di
-`assets/vendor/`, bukan dimuat dari CDN — supaya fitur ini tetap
-berfungsi tanpa koneksi internet, konsisten dengan prinsip aplikasi ini
-yang berjalan sepenuhnya di browser.
+Library pembuat PDF (`jsPDF` + `jspdf-autotable`) dan client Supabase
+**di-bundle lokal** di `assets/vendor/`, bukan dimuat dari CDN — supaya
+tidak bergantung pada ketersediaan CDN pihak ketiga.
 
 ## Aturan bisnis yang diterapkan
 
@@ -111,46 +105,53 @@ yang berjalan sepenuhnya di browser.
 ## Struktur Berkas
 
 ```
-index.html          markup + 5 tab panel + modal (pinjaman, bukti, anggota) + login screen
-assets/style.css    tema, layout mobile-first, dark mode
-assets/app.js       data contoh, state, autentikasi (simulasi), rendering, logika bisnis
-assets/vendor/      jsPDF + jspdf-autotable (di-bundle lokal untuk fitur Unduh Laporan)
+index.html                 markup + 5 tab panel + modal + login/daftar screen
+assets/style.css           tema, layout mobile-first, dark mode
+assets/app.js              rendering & logika bisnis (baca/tulis lewat supabase-client.js)
+assets/supabase-client.js  satu-satunya lapisan akses database (auth, fetch, mutasi)
+assets/vendor/             jsPDF, jspdf-autotable, Supabase JS client (di-bundle lokal)
+supabase/schema.sql        skema tabel + Row Level Security (jalankan sekali di SQL Editor)
+supabase/SETUP.md          panduan setup project Supabase dari nol
 ```
 
-## Keamanan (batasan yang disengaja, bukan sekadar "belum sempat")
+## Keamanan
 
-Aplikasi ini sengaja dibuat tanpa backend/API — sesuai kebutuhan: tidak
-ada transaksi uang riil yang diproses aplikasi, dan tidak terkoneksi ke
-mobile banking. Konsekuensinya perlu dipahami, bukan diabaikan:
+Backend sungguhan lewat Supabase — password di-hash server-side (bukan
+disimpan di kode), data tersimpan di database bersama (bukan per-browser),
+dan akses diatur lewat Row Level Security (RLS) di level database, bukan
+cuma disembunyikan di UI:
 
-- **Login satu langkah (HP + password) hanya untuk identifikasi**, bukan
-  proteksi keamanan. Karena tidak ada server, semua password (dan semua
-  data anggota) ada di dalam `assets/app.js` yang bisa dibaca siapa pun
-  yang membuka kode sumber halaman — juga bisa dilewati langsung lewat
-  browser console. Ini bukan bug, ini konsekuensi struktural dari
-  arsitektur client-only.
-- **Cocok untuk**: dipakai internal antar anggota SEKE MESARI yang saling
-  percaya, link tidak disebar ke luar kelompok.
-- **Tidak cocok untuk**: data yang harus benar-benar rahasia dari sesama
-  anggota, atau situasi di mana seseorang bisa punya insentif membuka
-  kode sumber untuk melihat/mengubah data anggota lain.
-- Jika di masa depan aplikasi ini perlu menyimpan uang riil atau
-  terhubung ke sistem pembayaran, arsitektur ini **harus** diganti dengan
-  backend + autentikasi sungguhan — jangan menambah fitur uang riil di
-  atas fondasi client-only ini.
+- **Transparansi publik by design**: siapapun yang login boleh **membaca**
+  seluruh data anggota lain (nama, status pinjaman, tunggakan) — ini
+  sengaja, sesuai semangat "buku terbuka" koperasi keluarga, bukan
+  kebocoran.
+- **Menulis dibatasi ketat**: anggota hanya bisa menulis baris miliknya
+  sendiri (mendaftar akun sendiri, mengajukan pinjaman sendiri, upload
+  bukti bayar sendiri) — tidak bisa mengubah data anggota lain, tidak
+  bisa mengubah status persetujuan, dan **tidak bisa mengangkat diri
+  sendiri jadi admin** (kebijakan RLS memaksa akun baru selalu `role:
+  anggota`, terlepas dari apa yang dikirim client).
+- **Admin pertama** wajib di-set manual lewat SQL sekali (bukan lewat
+  aplikasi) — lihat `supabase/SETUP.md` langkah 5.
+- **Login HP + password tanpa OTP SMS**: SMS OTP tidak gratis di provider
+  manapun, jadi nomor HP dipetakan ke email sintetis dan diautentikasi
+  lewat Supabase Auth (email+password) — password tetap di-hash dengan
+  benar, cuma jalur pengirimannya bukan SMS.
+- **Kunci `anon` di `assets/supabase-client.js` memang publik** — ini
+  sesuai desain Supabase (keamanan ada di RLS, bukan di kerahasiaan
+  kunci). Yang **tidak boleh** pernah dipakai di kode client adalah kunci
+  `service_role` (akses penuh, bypass RLS).
 
 ## Batasan lain
 
-- **Tidak ada backend/database**: semua data tersimpan lokal per browser
-  (localStorage) — tidak disinkronkan antar perangkat/anggota. Setiap
-  anggota yang membuka aplikasi ini melihat data lokalnya sendiri, bukan
-  data bersama secara real-time.
-- **Foto bukti pembayaran** disimpan sebagai data URL di localStorage —
-  ukurannya terbatas dan bisa hilang jika cache browser dibersihkan.
+- Aplikasi butuh koneksi internet — tidak bisa dipakai offline seperti
+  versi client-only sebelumnya.
 - **Notifikasi**: pengingat jatuh tempo hanya muncul di dalam aplikasi
   (drawer 🔔), tidak ada push notification atau pesan WhatsApp.
-- **Audit log** tersimpan di state yang sama dengan data lain (localStorage)
-  — bukan log tingkat sistem yang tidak bisa dimodifikasi.
-- Data awal (nama anggota, saldo, transaksi, pengumuman) adalah
-  **data contoh** untuk demo tampilan, bukan data SEKE MESARI yang
-  sesungguhnya.
+- Tiap aksi (approve pinjaman, verifikasi bukti, dst) menyegarkan ulang
+  seluruh data dari server setelah menulis — sederhana dan selalu akurat,
+  tapi untuk koperasi dengan ratusan anggota aktif bersamaan pendekatan
+  ini perlu dioptimalkan (tidak relevan untuk skala satu keluarga).
+- Free tier Supabase menjeda project setelah ±1 minggu tanpa aktivitas —
+  otomatis aktif lagi begitu ada yang membuka aplikasi (tunggu beberapa
+  detik di percobaan pertama).

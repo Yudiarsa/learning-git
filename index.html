@@ -8,23 +8,34 @@
 </head>
 <body>
 
-<!-- ============ LOGIN (identifikasi anggota, tanpa backend) ============ -->
+<!-- ============ LOGIN / DAFTAR (Supabase Auth) ============ -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <div class="login-logo">SM</div>
     <h1 class="login-title">SEKE MESARI</h1>
     <p class="login-sub">Arisan &amp; Pinjaman Keluarga</p>
 
-    <form id="loginStep1" class="login-form">
+    <form id="loginForm" class="login-form">
       <label>Nomor HP</label>
       <input type="tel" id="loginHp" placeholder="08xxxxxxxxxx" required>
       <label>Password</label>
       <input type="password" id="loginPassword" placeholder="Password" required>
-      <button type="submit" class="btn-primary">Masuk</button>
-      <div class="login-hint">Demo Admin: HP <strong>081111000001</strong> / password <strong>admin123</strong> (Gede). Anggota lain &amp; password: lihat README.</div>
+      <button type="submit" class="btn-primary" id="loginSubmitBtn">Masuk</button>
     </form>
 
-    <div class="login-note">⚠️ Aplikasi ini berjalan sepenuhnya di browser (tanpa server). Login hanya untuk membedakan tampilan tiap anggota, bukan proteksi keamanan sungguhan — siapa pun yang bisa membuka kode sumbernya bisa melihat semua password. Cocok dipakai internal antar anggota yang saling percaya, bukan untuk data yang perlu benar-benar rahasia. Lihat README bagian Keamanan.</div>
+    <form id="daftarForm" class="login-form" hidden>
+      <label>Nama Lengkap</label>
+      <input type="text" id="daftarNama" placeholder="Nama Anda" required>
+      <label>Nomor HP</label>
+      <input type="tel" id="daftarHp" placeholder="08xxxxxxxxxx" required>
+      <label>Buat Password</label>
+      <input type="password" id="daftarPassword" placeholder="Minimal 6 karakter" minlength="6" required>
+      <button type="submit" class="btn-primary" id="daftarSubmitBtn">Daftar</button>
+    </form>
+
+    <button type="button" class="btn-link" id="toggleAuthModeBtn" style="width:100%;background:none;border:none;color:var(--primary);padding:12px;font-size:13px">Belum punya akun? Daftar di sini</button>
+
+    <div class="login-note">Akun Anda tersimpan di database SEKE MESARI (Supabase), bukan hanya di HP ini — password disimpan terenkripsi. Lihat README bagian Keamanan untuk detail arsitekturnya.</div>
   </div>
 </div>
 
@@ -164,7 +175,6 @@
         <div class="search-row" style="flex:1;margin-bottom:0">
           <input type="search" id="memberSearch" placeholder="Cari anggota...">
         </div>
-        <button class="btn-outline admin-only" id="addAnggotaBtn" hidden style="margin-left:8px">+ Tambah</button>
       </div>
       <div class="legend-row">
         <span class="legend-item"><span class="dot lancar"></span>Lancar</span>
@@ -254,23 +264,6 @@
   </div>
 </div>
 
-<!-- Modal: Tambah/Edit Anggota -->
-<div class="modal-overlay" id="anggotaFormOverlay" hidden>
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="anggotaFormTitle">Tambah Anggota</h3>
-      <button class="icon-btn" id="anggotaFormCloseBtn">✕</button>
-    </div>
-    <form id="anggotaForm">
-      <label>Nama</label>
-      <input type="text" id="anggotaNama" required>
-      <label>Nomor HP</label>
-      <input type="tel" id="anggotaHp" required>
-      <button type="submit" class="btn-primary">Simpan</button>
-    </form>
-  </div>
-</div>
-
 <!-- Modal: Detail Ringkasan (drilldown dari stat card Home) -->
 <div class="modal-overlay" id="statDrilldownOverlay" hidden>
   <div class="modal modal-large">
@@ -299,10 +292,12 @@
 
 <div class="toast" id="toast" hidden></div>
 
-<!-- Dibundel lokal (bukan CDN) supaya konsisten dengan aplikasi: tetap
-     berjalan tanpa koneksi internet, sama seperti fitur lainnya. -->
+<!-- Dibundel lokal (bukan CDN) supaya lebih stabil (tidak bergantung
+     ketersediaan CDN pihak ketiga). -->
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
+<script src="assets/vendor/supabase.js"></script>
+<script src="assets/supabase-client.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

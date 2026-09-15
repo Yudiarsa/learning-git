@@ -41,3 +41,22 @@ akun Supabase atas nama Anda).
    penuh, tidak boleh dipakai di aplikasi client-side sama sekali.
 
 Setelah saya terima dua nilai itu, saya lanjutkan migrasi kode aplikasinya.
+
+## 5. Jadikan diri Anda admin pertama
+
+Semua orang yang mendaftar lewat aplikasi otomatis jadi **role: anggota**
+(bukan admin) — ini sengaja, supaya orang tidak bisa mengangkat diri
+sendiri jadi admin. Karena itu, admin pertama harus di-set manual, sekali
+saja:
+
+1. Buka aplikasi, tap **"Belum punya akun? Daftar di sini"**, daftar
+   dengan nama & nomor HP Anda sendiri sebagai bendahara/admin.
+2. Kembali ke Supabase **SQL Editor** → **New query**, jalankan (ganti
+   nomor HP sesuai yang Anda daftarkan):
+   ```sql
+   update public.anggota set role = 'admin' where hp = '081111000001';
+   ```
+3. Logout dari aplikasi lalu login lagi — sekarang tampil sebagai Admin.
+
+Anggota lain yang mendaftar setelahnya otomatis dapat role anggota biasa —
+kalau perlu tambah admin lagi, ulangi langkah 2 dengan nomor HP mereka.
