@@ -2,6 +2,8 @@
 -- SEKE MESARI — Skema Database Supabase (Postgres)
 -- ============================================================================
 -- Jalankan file ini di: Supabase Dashboard -> SQL Editor -> New query -> Run
+-- Aman dijalankan berkali-kali (idempotent) — kalau gagal di tengah jalan,
+-- tinggal jalankan ulang dari awal, tidak akan error "already exists".
 --
 -- Desain autentikasi: login tetap "HP + Password" seperti aplikasi sekarang
 -- (tanpa OTP SMS, karena SMS OTP tidak gratis di provider manapun). Triknya:
@@ -20,7 +22,7 @@
 -- ---------------------------------------------------------------------------
 -- 1. ANGGOTA
 -- ---------------------------------------------------------------------------
-create table public.anggota (
+create table if not exists public.anggota (
   id uuid primary key references auth.users(id) on delete cascade,
   nama text not null,
   hp text not null unique,
@@ -38,7 +40,7 @@ comment on table public.anggota is 'Data anggota koperasi. id = auth.users.id (s
 -- 2. PINJAMAN (satu anggota hanya boleh punya 1 pinjaman aktif sekaligus —
 --    dijaga lewat unique index di bawah, bukan cuma di kode aplikasi)
 -- ---------------------------------------------------------------------------
-create table public.pinjaman (
+create table if not exists public.pinjaman (
   id uuid primary key default gen_random_uuid(),
   anggota_id uuid not null references public.anggota(id),
   jumlah bigint not null,
@@ -50,14 +52,14 @@ create table public.pinjaman (
   created_at timestamptz not null default now()
 );
 
-create unique index satu_pinjaman_aktif_per_anggota
+create unique index if not exists satu_pinjaman_aktif_per_anggota
   on public.pinjaman (anggota_id)
   where status = 'aktif';
 
 -- ---------------------------------------------------------------------------
 -- 3. TRANSAKSI (Buku Kas — audit trail: hanya bisa dibatalkan, tidak dihapus)
 -- ---------------------------------------------------------------------------
-create table public.transaksi (
+create table if not exists public.transaksi (
   id uuid primary key default gen_random_uuid(),
   tanggal date not null,
   anggota_id uuid not null references public.anggota(id),
@@ -72,7 +74,7 @@ create table public.transaksi (
 -- ---------------------------------------------------------------------------
 -- 4. PENGAJUAN PINJAMAN
 -- ---------------------------------------------------------------------------
-create table public.pengajuan_pinjaman (
+create table if not exists public.pengajuan_pinjaman (
   id uuid primary key default gen_random_uuid(),
   anggota_id uuid not null references public.anggota(id),
   jumlah bigint not null,
@@ -84,7 +86,7 @@ create table public.pengajuan_pinjaman (
 -- ---------------------------------------------------------------------------
 -- 5. BUKTI PEMBAYARAN (foto disimpan di Supabase Storage, kolom ini cuma URL)
 -- ---------------------------------------------------------------------------
-create table public.bukti_pembayaran (
+create table if not exists public.bukti_pembayaran (
   id uuid primary key default gen_random_uuid(),
   anggota_id uuid not null references public.anggota(id),
   tanggal date not null,
@@ -98,7 +100,7 @@ create table public.bukti_pembayaran (
 -- ---------------------------------------------------------------------------
 -- 6. PENGUMUMAN
 -- ---------------------------------------------------------------------------
-create table public.pengumuman (
+create table if not exists public.pengumuman (
   id uuid primary key default gen_random_uuid(),
   teks text not null,
   tanggal date not null default current_date,
@@ -108,7 +110,7 @@ create table public.pengumuman (
 -- ---------------------------------------------------------------------------
 -- 7. AUDIT LOG (immutable — tidak ada policy UPDATE/DELETE sama sekali)
 -- ---------------------------------------------------------------------------
-create table public.audit_log (
+create table if not exists public.audit_log (
   id uuid primary key default gen_random_uuid(),
   actor text not null,
   aksi text not null,
@@ -118,14 +120,14 @@ create table public.audit_log (
 -- ---------------------------------------------------------------------------
 -- 8. PENGATURAN (satu baris saja: periode berjalan, kas awal)
 -- ---------------------------------------------------------------------------
-create table public.pengaturan (
+create table if not exists public.pengaturan (
   id int primary key default 1,
   periode_sekarang int not null default 1,
   total_periode int not null default 10,
   kas_terkumpul_awal bigint not null default 0,
   constraint pengaturan_singleton check (id = 1)
 );
-insert into public.pengaturan (id) values (1);
+insert into public.pengaturan (id) values (1) on conflict (id) do nothing;
 
 -- ============================================================================
 -- ROW LEVEL SECURITY
@@ -156,38 +158,62 @@ alter table public.pengumuman enable row level security;
 alter table public.audit_log enable row level security;
 alter table public.pengaturan enable row level security;
 
+-- Semua "create policy" didahului "drop policy if exists" supaya file ini
+-- aman dijalankan berulang kali (Postgres tidak punya "create policy if not
+-- exists" bawaan).
+
 -- anggota: semua yang login boleh baca; daftar sendiri (insert baris sendiri);
 -- admin boleh update siapa saja, anggota boleh update baris sendiri terbatas.
+drop policy if exists "anggota_select_all" on public.anggota;
 create policy "anggota_select_all" on public.anggota for select to authenticated using (true);
+drop policy if exists "anggota_insert_self" on public.anggota;
 create policy "anggota_insert_self" on public.anggota for insert to authenticated with check (id = auth.uid());
+drop policy if exists "anggota_update_admin" on public.anggota;
 create policy "anggota_update_admin" on public.anggota for update to authenticated using (public.is_admin());
+drop policy if exists "anggota_update_self" on public.anggota;
 create policy "anggota_update_self" on public.anggota for update to authenticated using (id = auth.uid());
 
 -- pinjaman, transaksi, pengajuan_pinjaman, bukti_pembayaran, pengumuman: baca semua
+drop policy if exists "pinjaman_select_all" on public.pinjaman;
 create policy "pinjaman_select_all" on public.pinjaman for select to authenticated using (true);
+drop policy if exists "transaksi_select_all" on public.transaksi;
 create policy "transaksi_select_all" on public.transaksi for select to authenticated using (true);
+drop policy if exists "pengajuan_select_all" on public.pengajuan_pinjaman;
 create policy "pengajuan_select_all" on public.pengajuan_pinjaman for select to authenticated using (true);
+drop policy if exists "bukti_select_all" on public.bukti_pembayaran;
 create policy "bukti_select_all" on public.bukti_pembayaran for select to authenticated using (true);
+drop policy if exists "pengumuman_select_all" on public.pengumuman;
 create policy "pengumuman_select_all" on public.pengumuman for select to authenticated using (true);
+drop policy if exists "auditlog_select_all" on public.audit_log;
 create policy "auditlog_select_all" on public.audit_log for select to authenticated using (true);
+drop policy if exists "pengaturan_select_all" on public.pengaturan;
 create policy "pengaturan_select_all" on public.pengaturan for select to authenticated using (true);
 
 -- pinjaman & transaksi: hanya admin yang menulis (dibuat lewat alur approval)
+drop policy if exists "pinjaman_write_admin" on public.pinjaman;
 create policy "pinjaman_write_admin" on public.pinjaman for all to authenticated using (public.is_admin());
+drop policy if exists "transaksi_write_admin" on public.transaksi;
 create policy "transaksi_write_admin" on public.transaksi for all to authenticated using (public.is_admin());
 
 -- pengajuan_pinjaman: anggota ajukan punya sendiri; admin putuskan (update) semua
+drop policy if exists "pengajuan_insert_self" on public.pengajuan_pinjaman;
 create policy "pengajuan_insert_self" on public.pengajuan_pinjaman for insert to authenticated with check (anggota_id = auth.uid());
+drop policy if exists "pengajuan_update_admin" on public.pengajuan_pinjaman;
 create policy "pengajuan_update_admin" on public.pengajuan_pinjaman for update to authenticated using (public.is_admin());
 
 -- bukti_pembayaran: anggota upload punya sendiri; admin verifikasi (update) semua
+drop policy if exists "bukti_insert_self" on public.bukti_pembayaran;
 create policy "bukti_insert_self" on public.bukti_pembayaran for insert to authenticated with check (anggota_id = auth.uid());
+drop policy if exists "bukti_update_admin" on public.bukti_pembayaran;
 create policy "bukti_update_admin" on public.bukti_pembayaran for update to authenticated using (public.is_admin());
 
 -- pengumuman & pengaturan: admin-only untuk tulis
+drop policy if exists "pengumuman_write_admin" on public.pengumuman;
 create policy "pengumuman_write_admin" on public.pengumuman for all to authenticated using (public.is_admin());
+drop policy if exists "pengaturan_write_admin" on public.pengaturan;
 create policy "pengaturan_write_admin" on public.pengaturan for all to authenticated using (public.is_admin());
 
 -- audit_log: siapapun yang login boleh menambah baris (setiap aksi tercatat),
 -- TIDAK ADA policy update/delete sama sekali -> log tidak bisa diubah/dihapus.
+drop policy if exists "auditlog_insert_all" on public.audit_log;
 create policy "auditlog_insert_all" on public.audit_log for insert to authenticated with check (true);
