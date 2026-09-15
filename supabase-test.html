@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Koneksi Supabase — SEKE MESARI</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 16px; background: #F8FAFC; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 14px; margin-top: 28px; border-top: 1px solid #ddd; padding-top: 16px; }
+  label { display: block; font-size: 12px; color: #555; margin: 10px 0 4px; }
+  input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+  button { margin-top: 12px; padding: 10px 16px; border: none; border-radius: 6px; background: #0F766E; color: #fff; font-size: 14px; width: 100%; }
+  pre { background: #111; color: #0f0; padding: 10px; border-radius: 6px; font-size: 11px; white-space: pre-wrap; word-break: break-word; margin-top: 10px; min-height: 40px; }
+  .err { color: #ff6b6b !important; }
+</style>
+</head>
+<body>
+
+<h1>🧪 Test Koneksi Supabase</h1>
+<p style="font-size:13px;color:#555">Halaman ini terpisah dari aplikasi utama — cuma untuk membuktikan Daftar &amp; Login ke Supabase sudah benar sebelum dipasang ke aplikasi asli.</p>
+
+<h2>1. Daftar Admin Pertama</h2>
+<label>Nama</label>
+<input id="suNama" value="Gede">
+<label>Nomor HP</label>
+<input id="suHp" value="081111000001">
+<label>Password</label>
+<input id="suPassword" type="password" value="admin123">
+<button onclick="daftar()">Daftar</button>
+<pre id="suLog">(belum ada aksi)</pre>
+
+<h2>2. Login</h2>
+<label>Nomor HP</label>
+<input id="liHp" value="081111000001">
+<label>Password</label>
+<input id="liPassword" type="password" value="admin123">
+<button onclick="login()">Login</button>
+<button onclick="logout()" style="background:#999;margin-top:6px">Logout</button>
+<pre id="liLog">(belum ada aksi)</pre>
+
+<script src="assets/vendor/supabase.js"></script>
+<script>
+  const SUPABASE_URL = "https://pkftykrbgbsrqkepnkmt.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrZnR5a3JiZ2JzcnFrZXBua210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0MDE4MDQsImV4cCI6MjEwNDk3NzgwNH0.Yw8OGRLw_TkunGjvDdS1xKP7sevU-GBOuq1Wo-y0azI";
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function hpToEmail(hp) { return hp.trim() + "@sekemesari.local"; }
+
+  function log(elId, obj, isErr) {
+    const el = document.getElementById(elId);
+    el.className = isErr ? "err" : "";
+    el.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+  }
+
+  async function daftar() {
+    const nama = document.getElementById("suNama").value.trim();
+    const hp = document.getElementById("suHp").value.trim();
+    const password = document.getElementById("suPassword").value;
+    log("suLog", "Mendaftarkan...");
+    try {
+      const { data, error } = await client.auth.signUp({
+        email: hpToEmail(hp),
+        password
+      });
+      if (error) { log("suLog", "SIGNUP ERROR: " + error.message, true); return; }
+      if (!data.session) {
+        log("suLog", "Signup sukses TAPI tidak ada session — kemungkinan 'Confirm email' masih AKTIF di Supabase Auth settings. Matikan dulu (lihat instruksi), lalu coba lagi.", true);
+        return;
+      }
+      const { error: insertErr } = await client.from("anggota").insert({
+        id: data.user.id,
+        nama,
+        hp,
+        role: "admin"
+      });
+      if (insertErr) { log("suLog", "INSERT ANGGOTA ERROR: " + insertErr.message, true); return; }
+      log("suLog", "BERHASIL. User dibuat + baris anggota tersimpan.\nuser id: " + data.user.id);
+    } catch (e) {
+      log("suLog", "EXCEPTION: " + e.message, true);
+    }
+  }
+
+  async function login() {
+    const hp = document.getElementById("liHp").value.trim();
+    const password = document.getElementById("liPassword").value;
+    log("liLog", "Login...");
+    try {
+      const { data, error } = await client.auth.signInWithPassword({
+        email: hpToEmail(hp),
+        password
+      });
+      if (error) { log("liLog", "LOGIN ERROR: " + error.message, true); return; }
+      const { data: anggotaRow, error: selectErr } = await client
+        .from("anggota")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+      if (selectErr) { log("liLog", "LOGIN sukses, TAPI gagal ambil data anggota: " + selectErr.message, true); return; }
+      log("liLog", "LOGIN BERHASIL.\n" + JSON.stringify(anggotaRow, null, 2));
+    } catch (e) {
+      log("liLog", "EXCEPTION: " + e.message, true);
+    }
+  }
+
+  async function logout() {
+    await client.auth.signOut();
+    log("liLog", "Sudah logout.");
+  }
+</script>
+</body>
+</html>
